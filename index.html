@@ -198,6 +198,89 @@
             return <span ref={spanRef} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}></span>;
         };
 
+        const CAT_COLORS = ['#3b82f6','#a78bfa','#34d399','#fbbf24','#f472b6','#22d3ee','#fb923c','#e879f9'];
+
+        function GastosChart({ data, formatCurrency }) {
+            const [animated, setAnimated] = React.useState(false);
+            React.useEffect(() => {
+                const t = setTimeout(() => setAnimated(true), 80);
+                return () => clearTimeout(t);
+            }, []);
+
+            const total = data.reduce((s, d) => s + d.value, 0);
+            const R = 88, CX = 110, CY = 110;
+            const circ = 2 * Math.PI * R;
+            const GAP = 4;
+
+            let cum = 0;
+            const segments = data.map((d, i) => {
+                const frac = d.value / total;
+                const arcLen = Math.max(frac * circ - GAP, 2);
+                const offset = circ - cum * circ;
+                cum += frac;
+                return { ...d, arcLen, offset, color: CAT_COLORS[i % CAT_COLORS.length], frac };
+            });
+
+            return (
+                <div>
+                    <style>{`
+                        @keyframes seg-in { from { opacity:0; stroke-dasharray: 0 ${circ}; } }
+                        @keyframes bar-in { from { width: 0; } }
+                        @keyframes fade-up { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+                        .seg-anim { animation: seg-in 0.9s cubic-bezier(.4,0,.2,1) both; }
+                        .bar-anim { animation: bar-in 1s cubic-bezier(.4,0,.2,1) both; }
+                        .cat-row { animation: fade-up 0.5s ease both; }
+                        .gasto-tr:hover td { background: rgba(59,130,246,0.04) !important; }
+                        .cat-badge { display:inline-flex; align-items:center; gap:5px; padding: 2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
+                    `}</style>
+
+                    <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'2.5rem', alignItems:'center', padding:'8px 0 24px' }}>
+                        {/* SVG Donut */}
+                        <div style={{ position:'relative', flexShrink:0 }}>
+                            <svg width="220" height="220" viewBox="0 0 220 220">
+                                <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="22"/>
+                                {segments.map((seg, i) => (
+                                    <circle key={i} cx={CX} cy={CY} r={R} fill="none"
+                                        stroke={seg.color} strokeWidth="22" strokeLinecap="round"
+                                        strokeDasharray={`${animated ? seg.arcLen : 0} ${circ}`}
+                                        strokeDashoffset={seg.offset}
+                                        transform={`rotate(-90 ${CX} ${CY})`}
+                                        style={{ transition: `stroke-dasharray ${0.7 + i*0.1}s cubic-bezier(.4,0,.2,1) ${i*0.06}s`, filter:`drop-shadow(0 0 6px ${seg.color}44)` }}
+                                    />
+                                ))}
+                            </svg>
+                            <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none' }}>
+                                <div style={{ fontSize:'10px', letterSpacing:'0.08em', textTransform:'uppercase', color:'#475569', marginBottom:'4px' }}>Total</div>
+                                <div style={{ fontSize:'20px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', letterSpacing:'-0.02em' }}>{formatCurrency(total)}</div>
+                                <div style={{ fontSize:'11px', color:'#475569', marginTop:'3px' }}>{data.length} categorías</div>
+                            </div>
+                        </div>
+
+                        {/* Category breakdown */}
+                        <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+                            {segments.map((seg, i) => (
+                                <div key={i} className="cat-row" style={{ animationDelay:`${i*0.07}s` }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
+                                        <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
+                                            <div style={{ width:'9px', height:'9px', borderRadius:'50%', background:seg.color, flexShrink:0, boxShadow:`0 0 6px ${seg.color}88` }}/>
+                                            <span style={{ fontSize:'13px', color:'#cbd5e1', fontWeight:500 }}>{seg.name}</span>
+                                        </div>
+                                        <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
+                                            <span style={{ fontSize:'11px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{(seg.frac*100).toFixed(1)}%</span>
+                                            <span style={{ fontSize:'13px', color:'#f1f5f9', fontWeight:600, fontVariantNumeric:'tabular-nums', minWidth:'80px', textAlign:'right' }}>{formatCurrency(seg.value)}</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'999px', overflow:'hidden' }}>
+                                        <div className="bar-anim" style={{ height:'100%', width:`${animated ? seg.frac*100 : 0}%`, background:`linear-gradient(90deg, ${seg.color}cc, ${seg.color})`, borderRadius:'999px', transition:`width ${0.8+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.05}s` }}/>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         function App() {
             const [data, setData] = useState(null);
             const [loading, setLoading] = useState(true);
@@ -499,75 +582,79 @@
 
                         {/* ===================== TAB: EXPENSES ===================== */}
                         {activeTab === 'expenses' && (
-                            <div className="space-y-8 animate-fade-in">
-                                {gastosChartData.length > 0 && PieChart && (
-                                    <div className="saas-card overflow-hidden p-6 flex flex-col items-center">
-                                        <h2 className="text-base font-semibold text-slate-100 self-start mb-6 w-full border-b border-white/[0.04] pb-4">Desglose por Categoría</h2>
-                                        <div className="w-full h-[300px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={gastosChartData}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        innerRadius={60}
-                                                        outerRadius={100}
-                                                        paddingAngle={5}
-                                                        dataKey="value"
-                                                    >
-                                                        {gastosChartData.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                        ))}
-                                                    </Pie>
-                                                    <Tooltip 
-                                                        formatter={(value) => formatCurrency(value)}
-                                                        contentStyle={{ backgroundColor: '#0f182b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f8fafc' }}
-                                                    />
-                                                    <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}/>
-                                                </PieChart>
-                                            </ResponsiveContainer>
+                            <div className="space-y-6 animate-fade-in">
+
+                                {/* Stats row */}
+                                {(() => {
+                                    const totalGasto = gastos.reduce((s,g) => s + parseNumber(g.Gasto), 0);
+                                    const maxGasto = gastos.reduce((mx,g) => Math.max(mx, parseNumber(g.Gasto)), 0);
+                                    const maxItem = gastos.find(g => parseNumber(g.Gasto) === maxGasto);
+                                    return (
+                                        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'16px' }}>
+                                            {[
+                                                { label:'Gasto total', value: formatCurrency(totalGasto), sub: `${gastos.length} transacciones` },
+                                                { label:'Promedio por gasto', value: formatCurrency(gastos.length ? totalGasto/gastos.length : 0), sub: 'promedio simple' },
+                                                { label:'Mayor gasto', value: formatCurrency(maxGasto), sub: maxItem?.Descripción || '' },
+                                            ].map((s,i) => (
+                                                <div key={i} className="saas-card" style={{ padding:'20px 24px' }}>
+                                                    <div style={{ fontSize:'12px', color:'#64748b', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</div>
+                                                    <div style={{ fontSize:'22px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', letterSpacing:'-0.02em' }}>{s.value}</div>
+                                                    <div style={{ fontSize:'11px', color:'#475569', marginTop:'4px' }}>{s.sub}</div>
+                                                </div>
+                                            ))}
                                         </div>
+                                    );
+                                })()}
+
+                                {/* Chart card */}
+                                {gastosChartData.length > 0 && (
+                                    <div className="saas-card" style={{ padding:'24px 28px' }}>
+                                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', paddingBottom:'16px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                                            <h2 style={{ fontSize:'15px', fontWeight:600, color:'#f1f5f9' }}>Desglose por Categoría</h2>
+                                        </div>
+                                        <GastosChart data={gastosChartData} formatCurrency={formatCurrency} />
                                     </div>
                                 )}
 
+                                {/* Transactions table */}
                                 <div className="saas-card overflow-hidden">
-                                    <div className="px-6 py-5 border-b border-white/[0.04]">
-                                        <h2 className="text-base font-semibold text-slate-100">Transacciones y Consumos</h2>
+                                    <div style={{ padding:'20px 24px', borderBottom:'1px solid rgba(255,255,255,0.04)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                        <h2 style={{ fontSize:'15px', fontWeight:600, color:'#f1f5f9' }}>Transacciones</h2>
+                                        <span style={{ fontSize:'12px', color:'#475569' }}>{gastos.length} registros</span>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left whitespace-nowrap">
-                                            <thead className="bg-[#0b1220] border-b border-white/[0.04]">
+                                            <thead style={{ background:'#0b1220', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                                                 <tr>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Fecha</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Descripción</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Categorías</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Medio de Pago</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Importe</th>
+                                                    {['Fecha','Descripción','Categoría','Medio de Pago','Importe'].map((h,i) => (
+                                                        <th key={i} style={{ padding:'10px 20px', fontSize:'11px', fontWeight:500, color:'#475569', textTransform:'uppercase', letterSpacing:'0.07em', textAlign: i===4 ? 'right' : 'left' }}>{h}</th>
+                                                    ))}
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-white/[0.02]">
-                                                {gastos.map((g, i) => (
-                                                    <tr key={i} className="text-sm table-row-hover">
-                                                        <td className="px-6 py-3.5 text-slate-400 text-xs">{g.Fecha}</td>
-                                                        <td className="px-6 py-3.5 font-medium text-slate-200">{g.Descripción}</td>
-                                                        <td className="px-6 py-3.5">
-                                                            <div className="flex items-center space-x-1">
-                                                                <span className="text-xs text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded">{g.CategoriaGasto || 'Otros'}</span>
-                                                                {g.Subcategoria && (
-                                                                    <span className="text-xs text-slate-500">{g.Subcategoria}</span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-3.5 text-slate-400 text-sm">
-                                                            {g["Medio de pago"]}
-                                                        </td>
-                                                        <td className="px-6 py-3.5 text-right font-medium text-slate-100 number-font">
-                                                            {formatCurrency(parseNumber(g.Gasto))}
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                            <tbody>
+                                                {gastos.map((g, i) => {
+                                                    const catIdx = gastosChartData.findIndex(c => c.name === (g.CategoriaGasto || 'Otros'));
+                                                    const color = CAT_COLORS[catIdx >= 0 ? catIdx % CAT_COLORS.length : 0];
+                                                    return (
+                                                        <tr key={i} className="gasto-tr" style={{ borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
+                                                            <td style={{ padding:'12px 20px', fontSize:'12px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{g.Fecha}</td>
+                                                            <td style={{ padding:'12px 20px', fontSize:'13px', color:'#e2e8f0', fontWeight:500 }}>{g.Descripción}</td>
+                                                            <td style={{ padding:'12px 20px' }}>
+                                                                <span className="cat-badge" style={{ background:`${color}18`, color:color, border:`1px solid ${color}33` }}>
+                                                                    <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:color, flexShrink:0 }}/>
+                                                                    {g.CategoriaGasto || 'Otros'}
+                                                                    {g.Subcategoria ? ` · ${g.Subcategoria}` : ''}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ padding:'12px 20px', fontSize:'12px', color:'#64748b' }}>{g["Medio de pago"] || '—'}</td>
+                                                            <td style={{ padding:'12px 20px', fontSize:'13px', fontWeight:600, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', textAlign:'right' }}>
+                                                                {formatCurrency(parseNumber(g.Gasto))}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                                 {gastos.length === 0 && (
-                                                    <tr><td colSpan="5" className="px-6 py-6 text-center text-slate-500 text-sm">No hay consumos recientes.</td></tr>
+                                                    <tr><td colSpan="5" style={{ padding:'32px', textAlign:'center', color:'#475569', fontSize:'13px' }}>No hay consumos registrados.</td></tr>
                                                 )}
                                             </tbody>
                                         </table>
