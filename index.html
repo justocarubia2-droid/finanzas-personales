@@ -115,6 +115,24 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* Mobile */
+        .nav-scroll { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .nav-scroll::-webkit-scrollbar { display: none; }
+        .chart-grid { display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .cat-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
+        .gasto-tr:hover td { background: rgba(59,130,246,0.05) !important; }
+        @keyframes fade-up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+        .cat-row { animation: fade-up 0.45s ease both; }
+        .seg-circle { transition: stroke-width 0.18s ease, filter 0.18s ease; cursor: pointer; }
+        @keyframes sk-pulse { 0%,100%{opacity:.4} 50%{opacity:.8} }
+        @media (max-width: 640px) {
+            .chart-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+            .saas-card { border-radius: 10px; }
+            table td, table th { padding-left: 12px !important; padding-right: 12px !important; }
+        }
     </style>
 
     <!-- React via CDN -->
@@ -227,27 +245,6 @@
 
             return (
                 <div>
-                    <style>{`
-                        @keyframes fade-up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-                        .cat-row { animation: fade-up 0.45s ease both; }
-                        .gasto-tr:hover td { background: rgba(59,130,246,0.05) !important; }
-                        .cat-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
-                        .chart-grid { display:grid; grid-template-columns:200px 1fr; gap:2rem; align-items:center; }
-                        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-                        @media(max-width:640px){
-                            .chart-grid { grid-template-columns:1fr; }
-                            .stats-grid { grid-template-columns:1fr; gap:10px; }
-                            .chart-center { display:flex; flex-direction:column; align-items:center; }
-                            .hide-mobile { display:none !important; }
-                            .nav-scroll { overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-                            .nav-scroll::-webkit-scrollbar { display:none; }
-                            .nav-scroll button { white-space:nowrap; }
-                        }
-                        .seg-circle { transition: stroke-width 0.18s ease, filter 0.18s ease; cursor:pointer; }
-                        .seg-circle:hover, .seg-circle:focus { outline:none; }
-                        .center-anim { transition: opacity 0.2s ease; }
-                    `}</style>
-
                     <div className="chart-grid" style={{ padding:'4px 0 20px' }}>
                         {/* SVG Donut */}
                         <div style={{ position:'relative', display:'flex', justifyContent:'center', flexShrink:0 }}>
@@ -334,13 +331,14 @@
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const res = await fetch(WEBHOOK_URL);
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 45000);
+                    const res = await fetch(WEBHOOK_URL, { signal: controller.signal });
+                    clearTimeout(timeout);
                     const json = await res.json();
-                    
-                    const flatData = Array.isArray(json) 
+                    const flatData = Array.isArray(json)
                         ? json.flat(Infinity)
                         : (json.data ? json.data.flat(Infinity) : []);
-                    
                     setData(flatData);
                 } catch (err) {
                     console.error('Error fetching data:', err);
@@ -348,14 +346,6 @@
                 setLoading(false);
             };
 
-            if (loading) {
-                return (
-                    <div className="flex flex-col items-center justify-center min-h-screen pb-20">
-                        <Icon name="loader-2" className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-                        <p className="text-sm text-slate-400 font-medium">Sincronizando datos...</p>
-                    </div>
-                );
-            }
 
             const rawGastos = data?.filter(d => d.Categoria === 'Gastos') || [];
             const rawResumen = data?.filter(d => d.Categoria === 'Resumen') || [];
@@ -426,46 +416,25 @@
                         
                         {/* ===================== TAB: PORTFOLIO ===================== */}
                         {activeTab === 'portfolio' && (
-                            <div className="space-y-8 animate-fade-in">
-                                
+                            <div className="space-y-6">
+
                                 {/* Top KPI Cards */}
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                    
-                                    <div className="saas-card p-5 flex flex-col">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-1">Capital Invertido</h3>
-                                        <div className="flex items-baseline space-x-2 mt-1">
-                                            <span className="text-2xl font-semibold text-slate-100 number-font">{formatCurrency(valInvertido)}</span>
+                                    {[
+                                        { label:'Capital Invertido', val: formatCurrency(valInvertido), color:'text-slate-100' },
+                                        { label:'Valor Actual',      val: formatCurrency(valActual),    color: valActual >= valInvertido ? 'text-slate-100':'text-slate-300' },
+                                        { label:'PyL vendiendo hoy', val: (valGananciaSiVendes>=0?'+':'')+formatCurrency(valGananciaSiVendes), color: valGananciaSiVendes>=0?'text-emerald-500':'text-red-500' },
+                                        { label:'Ganancia Realizada', val: (valGananciaNeta>=0?'+':'')+formatCurrency(valGananciaNeta), color: valGananciaNeta>=0?'text-emerald-500':'text-red-500', sub: loading ? null : `Comisiones: ${formatCurrency(valComisiones)}` },
+                                    ].map((c,i) => (
+                                        <div key={i} className="saas-card p-4 flex flex-col">
+                                            <h3 className="text-slate-400 text-xs font-medium mb-2">{c.label}</h3>
+                                            {loading
+                                                ? <div style={{marginTop:4}}><div style={{height:28,width:'80%',borderRadius:6,background:'rgba(255,255,255,0.06)',animation:'sk-pulse 1.5s ease-in-out infinite'}}/></div>
+                                                : <span className={`text-xl font-semibold number-font ${c.color}`}>{c.val}</span>
+                                            }
+                                            {c.sub && <p className="text-xs text-slate-500 mt-1">{c.sub}</p>}
                                         </div>
-                                    </div>
-
-                                    <div className="saas-card p-5 flex flex-col">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-1">Valor Actual</h3>
-                                        <div className="flex items-baseline space-x-2 mt-1">
-                                            <span className={`text-2xl font-semibold number-font ${valActual >= valInvertido ? 'text-slate-100' : 'text-slate-300'}`}>
-                                                {formatCurrency(valActual)}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="saas-card p-5 flex flex-col">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-1">PyL vendiendo hoy</h3>
-                                        <div className="flex items-baseline space-x-2 mt-1">
-                                            <span className={`text-2xl font-semibold number-font ${valGananciaSiVendes >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                {valGananciaSiVendes >= 0 ? '+' : ''}{formatCurrency(valGananciaSiVendes)}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="saas-card p-5 flex flex-col">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-1">Ganancia Realizada</h3>
-                                        <div className="flex items-baseline space-x-2 mt-1">
-                                            <span className={`text-2xl font-semibold number-font ${valGananciaNeta >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                {valGananciaNeta >= 0 ? '+' : ''}{formatCurrency(valGananciaNeta)}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-slate-500 mt-2">Comisiones: {formatCurrency(valComisiones)}</p>
-                                    </div>
-                                    
+                                    ))}
                                 </div>
 
                                 {/* Open Positions Table */}
