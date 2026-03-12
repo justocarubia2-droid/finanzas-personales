@@ -202,15 +202,17 @@
 
         function GastosChart({ data, formatCurrency }) {
             const [animated, setAnimated] = React.useState(false);
+            const [active, setActive] = React.useState(null);
+
             React.useEffect(() => {
                 const t = setTimeout(() => setAnimated(true), 80);
                 return () => clearTimeout(t);
             }, []);
 
             const total = data.reduce((s, d) => s + d.value, 0);
-            const R = 88, CX = 110, CY = 110;
+            const R = 80, CX = 100, CY = 100;
             const circ = 2 * Math.PI * R;
-            const GAP = 4;
+            const GAP = 5;
 
             let cum = 0;
             const segments = data.map((d, i) => {
@@ -221,57 +223,96 @@
                 return { ...d, arcLen, offset, color: CAT_COLORS[i % CAT_COLORS.length], frac };
             });
 
+            const activeSeg = active !== null ? segments[active] : null;
+
             return (
                 <div>
                     <style>{`
-                        @keyframes seg-in { from { opacity:0; stroke-dasharray: 0 ${circ}; } }
-                        @keyframes bar-in { from { width: 0; } }
-                        @keyframes fade-up { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
-                        .seg-anim { animation: seg-in 0.9s cubic-bezier(.4,0,.2,1) both; }
-                        .bar-anim { animation: bar-in 1s cubic-bezier(.4,0,.2,1) both; }
-                        .cat-row { animation: fade-up 0.5s ease both; }
-                        .gasto-tr:hover td { background: rgba(59,130,246,0.04) !important; }
-                        .cat-badge { display:inline-flex; align-items:center; gap:5px; padding: 2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
+                        @keyframes fade-up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+                        .cat-row { animation: fade-up 0.45s ease both; }
+                        .gasto-tr:hover td { background: rgba(59,130,246,0.05) !important; }
+                        .cat-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
+                        .chart-grid { display:grid; grid-template-columns:200px 1fr; gap:2rem; align-items:center; }
+                        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+                        @media(max-width:640px){
+                            .chart-grid { grid-template-columns:1fr; }
+                            .stats-grid { grid-template-columns:1fr; gap:10px; }
+                            .chart-center { display:flex; flex-direction:column; align-items:center; }
+                            .hide-mobile { display:none !important; }
+                            .nav-scroll { overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+                            .nav-scroll::-webkit-scrollbar { display:none; }
+                            .nav-scroll button { white-space:nowrap; }
+                        }
+                        .seg-circle { transition: stroke-width 0.18s ease, filter 0.18s ease; cursor:pointer; }
+                        .seg-circle:hover, .seg-circle:focus { outline:none; }
+                        .center-anim { transition: opacity 0.2s ease; }
                     `}</style>
 
-                    <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'2.5rem', alignItems:'center', padding:'8px 0 24px' }}>
+                    <div className="chart-grid" style={{ padding:'4px 0 20px' }}>
                         {/* SVG Donut */}
-                        <div style={{ position:'relative', flexShrink:0 }}>
-                            <svg width="220" height="220" viewBox="0 0 220 220">
-                                <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="22"/>
+                        <div style={{ position:'relative', display:'flex', justifyContent:'center', flexShrink:0 }}>
+                            <svg width="200" height="200" viewBox="0 0 200 200" style={{ overflow:'visible' }}>
+                                <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="20"/>
                                 {segments.map((seg, i) => (
                                     <circle key={i} cx={CX} cy={CY} r={R} fill="none"
-                                        stroke={seg.color} strokeWidth="22" strokeLinecap="round"
+                                        stroke={seg.color}
+                                        strokeWidth={active === i ? 26 : 20}
+                                        strokeLinecap="round"
                                         strokeDasharray={`${animated ? seg.arcLen : 0} ${circ}`}
                                         strokeDashoffset={seg.offset}
                                         transform={`rotate(-90 ${CX} ${CY})`}
-                                        style={{ transition: `stroke-dasharray ${0.7 + i*0.1}s cubic-bezier(.4,0,.2,1) ${i*0.06}s`, filter:`drop-shadow(0 0 6px ${seg.color}44)` }}
+                                        className="seg-circle"
+                                        style={{
+                                            transition: `stroke-dasharray ${0.65+i*0.1}s cubic-bezier(.4,0,.2,1) ${i*0.05}s, stroke-width 0.2s ease, filter 0.2s ease`,
+                                            filter: active === i
+                                                ? `drop-shadow(0 0 10px ${seg.color})`
+                                                : `drop-shadow(0 0 4px ${seg.color}55)`,
+                                            pointerEvents: 'visibleStroke',
+                                        }}
+                                        onMouseEnter={() => setActive(i)}
+                                        onMouseLeave={() => setActive(null)}
+                                        onClick={() => setActive(active === i ? null : i)}
                                     />
                                 ))}
                             </svg>
-                            <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none' }}>
-                                <div style={{ fontSize:'10px', letterSpacing:'0.08em', textTransform:'uppercase', color:'#475569', marginBottom:'4px' }}>Total</div>
-                                <div style={{ fontSize:'20px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', letterSpacing:'-0.02em' }}>{formatCurrency(total)}</div>
-                                <div style={{ fontSize:'11px', color:'#475569', marginTop:'3px' }}>{data.length} categorías</div>
+                            {/* Center label */}
+                            <div className="center-anim" style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none', width:'110px' }}>
+                                {activeSeg ? (
+                                    <>
+                                        <div style={{ fontSize:'10px', fontWeight:700, color:activeSeg.color, letterSpacing:'0.05em', marginBottom:'3px', textTransform:'uppercase' }}>{activeSeg.name}</div>
+                                        <div style={{ fontSize:'18px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(activeSeg.value)}</div>
+                                        <div style={{ fontSize:'12px', color:activeSeg.color, marginTop:'4px', fontWeight:600 }}>{(activeSeg.frac*100).toFixed(1)}%</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div style={{ fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'#475569', marginBottom:'3px' }}>Total</div>
+                                        <div style={{ fontSize:'18px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(total)}</div>
+                                        <div style={{ fontSize:'11px', color:'#475569', marginTop:'4px' }}>{data.length} categ.</div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
                         {/* Category breakdown */}
-                        <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+                        <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
                             {segments.map((seg, i) => (
-                                <div key={i} className="cat-row" style={{ animationDelay:`${i*0.07}s` }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
-                                        <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
-                                            <div style={{ width:'9px', height:'9px', borderRadius:'50%', background:seg.color, flexShrink:0, boxShadow:`0 0 6px ${seg.color}88` }}/>
-                                            <span style={{ fontSize:'13px', color:'#cbd5e1', fontWeight:500 }}>{seg.name}</span>
+                                <div key={i} className="cat-row" style={{ animationDelay:`${i*0.06}s`, cursor:'pointer', opacity: active === null || active === i ? 1 : 0.45, transition:'opacity 0.2s ease' }}
+                                    onMouseEnter={() => setActive(i)}
+                                    onMouseLeave={() => setActive(null)}
+                                    onClick={() => setActive(active === i ? null : i)}
+                                >
+                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'5px' }}>
+                                        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                                            <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:seg.color, flexShrink:0, boxShadow:`0 0 5px ${seg.color}` }}/>
+                                            <span style={{ fontSize:'13px', color: active === i ? '#f1f5f9' : '#94a3b8', fontWeight: active === i ? 600 : 400, transition:'all 0.15s' }}>{seg.name}</span>
                                         </div>
-                                        <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
+                                        <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                                             <span style={{ fontSize:'11px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{(seg.frac*100).toFixed(1)}%</span>
-                                            <span style={{ fontSize:'13px', color:'#f1f5f9', fontWeight:600, fontVariantNumeric:'tabular-nums', minWidth:'80px', textAlign:'right' }}>{formatCurrency(seg.value)}</span>
+                                            <span style={{ fontSize:'13px', color:'#f1f5f9', fontWeight:600, fontVariantNumeric:'tabular-nums', minWidth:'72px', textAlign:'right' }}>{formatCurrency(seg.value)}</span>
                                         </div>
                                     </div>
                                     <div style={{ height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'999px', overflow:'hidden' }}>
-                                        <div className="bar-anim" style={{ height:'100%', width:`${animated ? seg.frac*100 : 0}%`, background:`linear-gradient(90deg, ${seg.color}cc, ${seg.color})`, borderRadius:'999px', transition:`width ${0.8+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.05}s` }}/>
+                                        <div style={{ height:'100%', width: animated ? `${seg.frac*100}%` : '0%', background:`linear-gradient(90deg,${seg.color}99,${seg.color})`, borderRadius:'999px', transition:`width ${0.75+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.04}s` }}/>
                                     </div>
                                 </div>
                             ))}
@@ -363,37 +404,32 @@
                             </div>
                             
                             {/* Navigation */}
-                            <nav className="flex space-x-8 mt-1">
-                                <button
-                                    onClick={() => setActiveTab('portfolio')}
-                                    className={`nav-tab pb-4 text-sm font-medium flex items-center ${activeTab === 'portfolio' ? 'active' : ''}`}
-                                >
-                                    Resumen y Portafolio
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('activity')}
-                                    className={`nav-tab pb-4 text-sm font-medium flex items-center ${activeTab === 'activity' ? 'active' : ''}`}
-                                >
-                                    Operaciones Históricas
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('expenses')}
-                                    className={`nav-tab pb-4 text-sm font-medium flex items-center ${activeTab === 'expenses' ? 'active' : ''}`}
-                                >
-                                    Gastos y Consumos
-                                </button>
+                            <nav className="nav-scroll flex mt-1" style={{ gap:0 }}>
+                                {[
+                                    { id:'portfolio', label:'Portafolio' },
+                                    { id:'activity',  label:'Operaciones' },
+                                    { id:'expenses',  label:'Gastos' },
+                                ].map(tab => (
+                                    <button key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`nav-tab pb-4 text-sm font-medium ${activeTab === tab.id ? 'active' : ''}`}
+                                        style={{ marginRight:'28px', whiteSpace:'nowrap' }}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </nav>
                         </div>
                     </header>
 
-                    <main className="w-full max-w-[1240px] mx-auto px-6 sm:px-8 mt-10 space-y-8">
+                    <main className="w-full max-w-[1240px] mx-auto mt-6 space-y-6" style={{ padding:'0 16px' }}>
                         
                         {/* ===================== TAB: PORTFOLIO ===================== */}
                         {activeTab === 'portfolio' && (
                             <div className="space-y-8 animate-fade-in">
                                 
                                 {/* Top KPI Cards */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                                     
                                     <div className="saas-card p-5 flex flex-col">
                                         <h3 className="text-slate-400 text-sm font-medium mb-1">Capital Invertido</h3>
@@ -590,7 +626,7 @@
                                     const maxGasto = gastos.reduce((mx,g) => Math.max(mx, parseNumber(g.Gasto)), 0);
                                     const maxItem = gastos.find(g => parseNumber(g.Gasto) === maxGasto);
                                     return (
-                                        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'16px' }}>
+                                        <div className="stats-grid">
                                             {[
                                                 { label:'Gasto total', value: formatCurrency(totalGasto), sub: `${gastos.length} transacciones` },
                                                 { label:'Promedio por gasto', value: formatCurrency(gastos.length ? totalGasto/gastos.length : 0), sub: 'promedio simple' },
