@@ -127,6 +127,7 @@
         .cat-row { animation: fade-up 0.45s ease both; }
         .seg-circle { transition: stroke-width 0.18s ease, filter 0.18s ease; cursor: pointer; }
         @keyframes sk-pulse { 0%,100%{opacity:.4} 50%{opacity:.8} }
+        @keyframes seg-pop { from { opacity:0; transform:scale(0.82); transform-origin:100px 100px; } to { opacity:1; transform:scale(1); transform-origin:100px 100px; } }
         @media (max-width: 640px) {
             .chart-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -218,102 +219,121 @@
 
         const CAT_COLORS = ['#3b82f6','#a78bfa','#34d399','#fbbf24','#f472b6','#22d3ee','#fb923c','#e879f9'];
 
+        // SVG arc helpers
+        const polar = (cx, cy, r, deg) => {
+            const rad = (deg - 90) * Math.PI / 180;
+            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+        };
+        const arcPath = (cx, cy, rIn, rOut, startDeg, endDeg) => {
+            const gap = 1.8;
+            const s = startDeg + gap, e = endDeg - gap;
+            if (e - s <= 0) return '';
+            const lg = (e - s) > 180 ? 1 : 0;
+            const p1 = polar(cx, cy, rOut, s), p2 = polar(cx, cy, rOut, e);
+            const p3 = polar(cx, cy, rIn, e),  p4 = polar(cx, cy, rIn, s);
+            return `M${p1.x} ${p1.y} A${rOut} ${rOut} 0 ${lg} 1 ${p2.x} ${p2.y} L${p3.x} ${p3.y} A${rIn} ${rIn} 0 ${lg} 0 ${p4.x} ${p4.y}Z`;
+        };
+
         function GastosChart({ data, formatCurrency }) {
             const [animated, setAnimated] = React.useState(false);
             const [active, setActive] = React.useState(null);
 
             React.useEffect(() => {
-                const t = setTimeout(() => setAnimated(true), 80);
+                const t = setTimeout(() => setAnimated(true), 60);
                 return () => clearTimeout(t);
             }, []);
 
             const total = data.reduce((s, d) => s + d.value, 0);
-            const R = 80, CX = 100, CY = 100;
-            const circ = 2 * Math.PI * R;
-            const GAP = 5;
+            const CX = 100, CY = 100, R_IN = 58, R_OUT = 90, R_ACTIVE = 96;
 
-            let cum = 0;
+            let cumDeg = 0;
             const segments = data.map((d, i) => {
                 const frac = d.value / total;
-                const arcLen = Math.max(frac * circ - GAP, 2);
-                const offset = circ - cum * circ;
-                cum += frac;
-                return { ...d, arcLen, offset, color: CAT_COLORS[i % CAT_COLORS.length], frac };
+                const startDeg = cumDeg;
+                const endDeg = cumDeg + frac * 360;
+                cumDeg = endDeg;
+                return { ...d, frac, startDeg, endDeg, color: CAT_COLORS[i % CAT_COLORS.length] };
             });
 
             const activeSeg = active !== null ? segments[active] : null;
 
-            return (
-                <div>
-                    <div className="chart-grid" style={{ padding:'4px 0 20px' }}>
-                        {/* SVG Donut */}
-                        <div style={{ position:'relative', display:'flex', justifyContent:'center', flexShrink:0 }}>
-                            <svg width="200" height="200" viewBox="0 0 200 200" style={{ overflow:'visible' }}>
-                                <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="20"/>
-                                {segments.map((seg, i) => (
-                                    <circle key={i} cx={CX} cy={CY} r={R} fill="none"
-                                        stroke={seg.color}
-                                        strokeWidth={active === i ? 26 : 20}
-                                        strokeLinecap="round"
-                                        strokeDasharray={`${animated ? seg.arcLen : 0} ${circ}`}
-                                        strokeDashoffset={seg.offset}
-                                        transform={`rotate(-90 ${CX} ${CY})`}
-                                        className="seg-circle"
-                                        style={{
-                                            transition: `stroke-dasharray ${0.65+i*0.1}s cubic-bezier(.4,0,.2,1) ${i*0.05}s, stroke-width 0.2s ease, filter 0.2s ease`,
-                                            filter: active === i
-                                                ? `drop-shadow(0 0 10px ${seg.color})`
-                                                : `drop-shadow(0 0 4px ${seg.color}55)`,
-                                            pointerEvents: 'visibleStroke',
-                                        }}
-                                        onMouseEnter={() => setActive(i)}
-                                        onMouseLeave={() => setActive(null)}
-                                        onClick={() => setActive(active === i ? null : i)}
-                                    />
-                                ))}
-                            </svg>
-                            {/* Center label */}
-                            <div className="center-anim" style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none', width:'110px' }}>
-                                {activeSeg ? (
-                                    <>
-                                        <div style={{ fontSize:'10px', fontWeight:700, color:activeSeg.color, letterSpacing:'0.05em', marginBottom:'3px', textTransform:'uppercase' }}>{activeSeg.name}</div>
-                                        <div style={{ fontSize:'18px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(activeSeg.value)}</div>
-                                        <div style={{ fontSize:'12px', color:activeSeg.color, marginTop:'4px', fontWeight:600 }}>{(activeSeg.frac*100).toFixed(1)}%</div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div style={{ fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'#475569', marginBottom:'3px' }}>Total</div>
-                                        <div style={{ fontSize:'18px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(total)}</div>
-                                        <div style={{ fontSize:'11px', color:'#475569', marginTop:'4px' }}>{data.length} categ.</div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+            const handleEnter = (i) => setActive(i);
+            const handleLeave = () => setActive(null);
+            const handleClick = (i) => setActive(prev => prev === i ? null : i);
 
-                        {/* Category breakdown */}
-                        <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-                            {segments.map((seg, i) => (
-                                <div key={i} className="cat-row" style={{ animationDelay:`${i*0.06}s`, cursor:'pointer', opacity: active === null || active === i ? 1 : 0.45, transition:'opacity 0.2s ease' }}
-                                    onMouseEnter={() => setActive(i)}
-                                    onMouseLeave={() => setActive(null)}
-                                    onClick={() => setActive(active === i ? null : i)}
-                                >
-                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'5px' }}>
-                                        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                                            <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:seg.color, flexShrink:0, boxShadow:`0 0 5px ${seg.color}` }}/>
-                                            <span style={{ fontSize:'13px', color: active === i ? '#f1f5f9' : '#94a3b8', fontWeight: active === i ? 600 : 400, transition:'all 0.15s' }}>{seg.name}</span>
-                                        </div>
-                                        <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                                            <span style={{ fontSize:'11px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{(seg.frac*100).toFixed(1)}%</span>
-                                            <span style={{ fontSize:'13px', color:'#f1f5f9', fontWeight:600, fontVariantNumeric:'tabular-nums', minWidth:'72px', textAlign:'right' }}>{formatCurrency(seg.value)}</span>
-                                        </div>
+            return (
+                <div className="chart-grid" style={{ padding:'4px 0 20px' }}>
+                    {/* SVG Donut — path-based, exact hit detection */}
+                    <div style={{ position:'relative', display:'flex', justifyContent:'center', flexShrink:0 }}>
+                        <svg width="200" height="200" viewBox="0 0 200 200">
+                            {/* Track */}
+                            <circle cx={CX} cy={CY} r={(R_IN+R_OUT)/2} fill="none"
+                                stroke="rgba(255,255,255,0.04)" strokeWidth={R_OUT-R_IN}/>
+                            {/* Segments */}
+                            {segments.map((seg, i) => {
+                                const isAct = active === i;
+                                const rOut = isAct ? R_ACTIVE : R_OUT;
+                                const d = arcPath(CX, CY, R_IN, rOut, seg.startDeg, seg.endDeg);
+                                return (
+                                    <path key={i} d={d} fill={seg.color}
+                                        style={{
+                                            opacity: animated ? (active === null || isAct ? 1 : 0.35) : 0,
+                                            filter: isAct ? `drop-shadow(0 0 8px ${seg.color})` : 'none',
+                                            transition: `opacity 0.2s ease, filter 0.2s ease`,
+                                            animation: animated ? `seg-pop 0.5s cubic-bezier(.34,1.56,.64,1) ${i*0.07}s both` : 'none',
+                                            cursor: 'pointer',
+                                        }}
+                                        onMouseEnter={() => handleEnter(i)}
+                                        onMouseLeave={handleLeave}
+                                        onClick={() => handleClick(i)}
+                                    />
+                                );
+                            })}
+                        </svg>
+                        {/* Center label */}
+                        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none', width:'108px' }}>
+                            {activeSeg ? (
+                                <>
+                                    <div style={{ fontSize:'10px', fontWeight:700, color:activeSeg.color, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:'3px' }}>{activeSeg.name}</div>
+                                    <div style={{ fontSize:'19px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(activeSeg.value)}</div>
+                                    <div style={{ fontSize:'13px', color:activeSeg.color, marginTop:'5px', fontWeight:600 }}>{(activeSeg.frac*100).toFixed(1)}%</div>
+                                </>
+                            ) : (
+                                <>
+                                    <div style={{ fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'#475569', marginBottom:'3px' }}>Total</div>
+                                    <div style={{ fontSize:'19px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(total)}</div>
+                                    <div style={{ fontSize:'11px', color:'#475569', marginTop:'4px' }}>{data.length} categ.</div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Category list */}
+                    <div style={{ display:'flex', flexDirection:'column', gap:'11px' }}>
+                        {segments.map((seg, i) => (
+                            <div key={i} className="cat-row"
+                                style={{ animationDelay:`${i*0.06}s`, cursor:'pointer',
+                                    opacity: active === null || active === i ? 1 : 0.4,
+                                    transition:'opacity 0.18s ease' }}
+                                onMouseEnter={() => handleEnter(i)}
+                                onMouseLeave={handleLeave}
+                                onClick={() => handleClick(i)}
+                            >
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'5px' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                                        <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:seg.color, flexShrink:0, boxShadow:`0 0 4px ${seg.color}` }}/>
+                                        <span style={{ fontSize:'13px', color: active===i?'#f1f5f9':'#94a3b8', fontWeight: active===i?600:400, transition:'all 0.15s' }}>{seg.name}</span>
                                     </div>
-                                    <div style={{ height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'999px', overflow:'hidden' }}>
-                                        <div style={{ height:'100%', width: animated ? `${seg.frac*100}%` : '0%', background:`linear-gradient(90deg,${seg.color}99,${seg.color})`, borderRadius:'999px', transition:`width ${0.75+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.04}s` }}/>
+                                    <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                                        <span style={{ fontSize:'11px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{(seg.frac*100).toFixed(1)}%</span>
+                                        <span style={{ fontSize:'13px', color:'#f1f5f9', fontWeight:600, fontVariantNumeric:'tabular-nums', minWidth:'72px', textAlign:'right' }}>{formatCurrency(seg.value)}</span>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                                <div style={{ height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'999px', overflow:'hidden' }}>
+                                    <div style={{ height:'100%', width:`${animated?seg.frac*100:0}%`, background:`linear-gradient(90deg,${seg.color}88,${seg.color})`, borderRadius:'999px', transition:`width ${0.7+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.04}s` }}/>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
