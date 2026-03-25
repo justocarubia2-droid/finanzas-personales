@@ -1,715 +1,765 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resumen Financiero</title>
+    <title>Finanzas Personales</title>
     <script>
         window.addEventListener('error', function(e) {
-            var errDiv = document.createElement('div');
-            errDiv.style.cssText = 'background:#fee2e2;color:#b91c1c;padding:16px;font-family:monospace;position:fixed;top:0;left:0;right:0;z-index:99999;border-bottom:2px solid #ef4444;';
-            errDiv.innerHTML = '<strong>Error crítico:</strong> ' + e.message + '<br/>Línea: ' + e.lineno;
-            document.body.appendChild(errDiv);
+            var d = document.createElement('div');
+            d.style.cssText = 'background:#fee2e2;color:#b91c1c;padding:16px;font-family:monospace;position:fixed;top:0;left:0;right:0;z-index:99999;border-bottom:2px solid #ef4444;';
+            d.innerHTML = '<strong>Error:</strong> ' + e.message + ' — línea ' + e.lineno;
+            document.body.appendChild(d);
         });
         window.addEventListener('unhandledrejection', function(e) {
-            var errDiv = document.createElement('div');
-            errDiv.style.cssText = 'background:#fee2e2;color:#b91c1c;padding:16px;font-family:monospace;position:fixed;top:0;left:0;right:0;z-index:99999;border-bottom:2px solid #ef4444;';
-            errDiv.innerHTML = '<strong>Promesa rechazada:</strong> ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason));
-            document.body.appendChild(errDiv);
+            var d = document.createElement('div');
+            d.style.cssText = 'background:#fee2e2;color:#b91c1c;padding:16px;font-family:monospace;position:fixed;top:0;left:0;right:0;z-index:99999;border-bottom:2px solid #ef4444;';
+            d.innerHTML = '<strong>Promesa rechazada:</strong> ' + (e.reason?.message || String(e.reason));
+            document.body.appendChild(d);
         });
     </script>
-    <!-- Inter Font -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind via CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', 'sans-serif'],
-                    },
-                    colors: {
-                        background: '#040d1e', // deep navy
-                        surface: '#0f182b',
-                        surfaceHover: '#152136',
-                        borderLight: 'rgba(255, 255, 255, 0.08)',
-                        textPrimary: '#f8fafc',
-                        textSecondary: '#94a3b8',
-                        accentBlue: '#2563eb', // subtle muted blue
-                        profit: '#10b981', // green
-                        loss: '#ef4444',   // red
-                    },
-                    boxShadow: {
-                        card: '0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-                        subtle: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-                    }
-                }
-            }
-        }
-    </script>
-    
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: {} } }</script>
+
     <style>
-        body {
-            background-color: #040d1e;
-            background-image: linear-gradient(180deg, #040d1e 0%, #030814 100%);
-            color: #f8fafc;
-            margin: 0;
-            overflow-x: hidden;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        :root {
+            --green:  #10b981;
+            --red:    #f43f5e;
+            --amber:  #f59e0b;
         }
 
-        .saas-card {
-            background-color: #0f182b;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            font-weight: 300;
+            background: #000;
+            background-image:
+                radial-gradient(ellipse 900px 600px at 80% -5%,  rgba(99,102,241,0.09) 0%, transparent 55%),
+                radial-gradient(ellipse 700px 500px at -5% 90%,  rgba(139,92,246,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 500px 400px at 50% 110%, rgba(16,185,129,0.04) 0%, transparent 50%);
+            color: rgba(255,255,255,0.88);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .font-heading { font-family: 'Instrument Serif', serif; font-style: italic; }
+        .font-mono    { font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+        /* ── Liquid Glass ─────────────────────────────────── */
+        .liquid-glass {
+            background: rgba(255,255,255,0.01);
+            background-blend-mode: luminosity;
+            backdrop-filter: blur(4px);
+            border: none;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
         }
-
-        .saas-card:hover {
-            border-color: rgba(255, 255, 255, 0.12);
+        .liquid-glass::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.4px;
+            background: linear-gradient(180deg,
+                rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
+                rgba(255,255,255,0)    40%, rgba(255,255,255,0)    60%,
+                rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
         }
 
-        .nav-tab {
-            color: #94a3b8;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
+        .liquid-glass-strong {
+            background: rgba(255,255,255,0.03);
+            background-blend-mode: luminosity;
+            backdrop-filter: blur(50px);
+            border: none;
+            box-shadow: 4px 4px 4px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
         }
-        
-        .nav-tab.active {
-            color: #f8fafc;
-            border-bottom-color: #3b82f6;
-        }
-
-        .nav-tab:hover:not(.active) {
-            color: #cbd5e1;
-            border-bottom-color: rgba(255,255,255,0.1);
-        }
-
-        .table-row-hover {
-            transition: background-color 0.15s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .table-row-hover:last-child { 
-            border-bottom: none; 
-        }
-        .table-row-hover:hover {
-            background-color: #152136;
-        }
-
-        .number-font {
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
+        .liquid-glass-strong::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.4px;
+            background: linear-gradient(180deg,
+                rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 20%,
+                rgba(255,255,255,0)   40%, rgba(255,255,255,0)   60%,
+                rgba(255,255,255,0.2) 80%, rgba(255,255,255,0.5) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
         }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        /* ── Nav bar ──────────────────────────────────────── */
+        .glass-nav {
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(24px) saturate(160%);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
 
-        /* Mobile */
-        .nav-scroll { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-        .nav-scroll::-webkit-scrollbar { display: none; }
-        .chart-grid { display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: center; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
-        .cat-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
-        .gasto-tr:hover td { background: rgba(59,130,246,0.05) !important; }
-        @keyframes fade-up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-        .cat-row { animation: fade-up 0.45s ease both; }
-        .seg-circle { transition: stroke-width 0.18s ease, filter 0.18s ease; cursor: pointer; }
-        @keyframes sk-pulse { 0%,100%{opacity:.4} 50%{opacity:.8} }
-        @keyframes seg-pop { from { opacity:0; transform:scale(0.82); transform-origin:100px 100px; } to { opacity:1; transform:scale(1); transform-origin:100px 100px; } }
-        @media (max-width: 640px) {
-            .chart-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; gap: 10px; }
-            .saas-card { border-radius: 10px; }
-            table td, table th { padding-left: 12px !important; padding-right: 12px !important; }
+        /* ── Tabs ────────────────────────────────────────── */
+        .tab {
+            font-family: 'Barlow', sans-serif;
+            font-weight: 400;
+            font-size: 13px;
+            color: rgba(255,255,255,0.32);
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding-bottom: 14px;
+            border-bottom: 1.5px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+            outline: none;
+        }
+        .tab:hover:not(.active) { color: rgba(255,255,255,0.55); }
+        .tab.active { color: rgba(255,255,255,0.9); border-bottom-color: rgba(255,255,255,0.7); }
+
+        /* ── Table rows ──────────────────────────────────── */
+        .tr {
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            transition: background 0.12s;
+        }
+        .tr:hover { background: rgba(255,255,255,0.015); }
+        .tr:last-child { border-bottom: none; }
+
+        /* ── Category badge ──────────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 400;
+            border: 1px solid;
+            font-family: 'Barlow', sans-serif;
+        }
+
+        /* ── Filter pill ─────────────────────────────────── */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 400;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.32);
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: all 0.15s;
+            outline: none;
+            font-family: 'Barlow', sans-serif;
+        }
+        .pill:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.04); }
+        .pill.on { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+
+        /* ── Skeleton ────────────────────────────────────── */
+        @keyframes pulse { 0%,100%{opacity:.18} 50%{opacity:.38} }
+        .skel { border-radius: 6px; background: rgba(255,255,255,0.06); animation: pulse 1.4s ease infinite; }
+
+        /* ── Animations ──────────────────────────────────── */
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:none} }
+        @keyframes segPop  { from{opacity:0;transform:scale(0.82);transform-origin:100px 100px} to{opacity:1;transform:scale(1);transform-origin:100px 100px} }
+        @keyframes spin    { to{transform:rotate(360deg)} }
+
+        .fade-up { animation: fadeUp 0.35s ease both; }
+
+        /* ── Scrollbar ───────────────────────────────────── */
+        ::-webkit-scrollbar { width:5px; height:5px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.07); border-radius:4px; }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.13); }
+        .noscroll { overflow-x:auto; scrollbar-width:none; }
+        .noscroll::-webkit-scrollbar { display:none; }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width:640px) {
+            .grid4      { grid-template-columns: 1fr 1fr !important; }
+            .grid4-hero { grid-column: 1 / -1; }
+            .split      { grid-template-columns: 1fr !important; }
+            .donut-grid { grid-template-columns: 1fr !important; justify-items: center; }
+            .donut-list { width: 100%; }
+            .main-content { padding: 18px 14px 0 !important; }
         }
     </style>
 
-    <!-- React via CDN -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Recharts -->
     <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
 </head>
-<body class="selection:bg-blue-500/30">
-    <div id="root"></div>
+<body>
+<div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        const { useState, useEffect, useMemo } = React;
-        const Recharts = window.Recharts || {};
-        const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } = Recharts;
+<script type="text/babel" data-type="module">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
-        const WEBHOOK_URL = 'https://n8n.tecleti.com/webhook/d437bbf9-059a-4763-8f87-2d02c8da4a33';
+const WEBHOOK = 'https://n8n.tecleti.com/webhook/d437bbf9-059a-4763-8f87-2d02c8da4a33';
 
-        const parseNumber = (val) => {
-            if (typeof val === 'number') return val;
-            if (!val) return 0;
-            return parseFloat(val.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
-        };
+// ── Utils ──────────────────────────────────────────────────────────
+const parse$ = v => {
+    if (typeof v === 'number') return v;
+    if (!v) return 0;
+    return parseFloat(v.toString().replace(/\./g,'').replace(/,/g,'.')) || 0;
+};
+const fmt$ = v => new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0).replace('US$','$');
+const fmtPct = v => {
+    try {
+        if (v===undefined||v===null||v==='') return '';
+        if (typeof v==='string'&&v.includes('%')) return v;
+        let n = typeof v==='number' ? v : parseFloat(v.toString().replace(/\./g,'').replace(/,/g,'.'));
+        if (isNaN(n)) return String(v);
+        return new Intl.NumberFormat('es-AR',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1}).format(n);
+    } catch { return String(v); }
+};
 
-        const formatCurrency = (val) => {
-            return new Intl.NumberFormat('es-AR', {
-                style: 'currency',
-                currency: 'USD', 
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-            }).format(val || 0).replace('US$', '$'); 
-        };
+// ── Error boundary ─────────────────────────────────────────────────
+class EB extends React.Component {
+    constructor(p) { super(p); this.state={err:null}; }
+    static getDerivedStateFromError(e) { return {err:e}; }
+    render() {
+        if (this.state.err) return <div style={{padding:40,color:'#f43f5e',fontFamily:'monospace',fontSize:13}}>{String(this.state.err)}</div>;
+        return this.props.children;
+    }
+}
 
-        const formatPercentage = (val) => {
-            try {
-                if (val === undefined || val === null || val === '') return '';
-                if (typeof val === 'string' && val.indexOf('%') !== -1) return val;
-                let num = typeof val === 'number' ? val : parseFloat(val.toString().replace(/\./g, '').replace(/,/g, '.'));
-                if (isNaN(num)) return String(val);
-                return new Intl.NumberFormat('es-AR', {
-                    style: 'percent',
-                    minimumFractionDigits: 1,
-                    maximumFractionDigits: 1
-                }).format(num);
-            } catch (err) {
-                console.error('Error formatting percentage:', err);
-                return String(val);
+// ── Icon ───────────────────────────────────────────────────────────
+const Icon = ({ name, size=15, style={} }) => {
+    const ref = useRef(null);
+    useEffect(() => {
+        if (!ref.current) return;
+        ref.current.innerHTML = `<i data-lucide="${name}"></i>`;
+        window.lucide?.createIcons({ root: ref.current });
+    }, [name]);
+    return <span ref={ref} style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:size, height:size, flexShrink:0, ...style }}/>;
+};
+
+// ── Category colors ────────────────────────────────────────────────
+const COLS = ['#f72585','#7209b7','#4cc9f0','#fb8500','#06d6a0','#ef233c','#3a86ff','#f4a261'];
+
+// ── Donut chart ────────────────────────────────────────────────────
+const polar = (cx,cy,r,deg) => {
+    const rad = (deg-90)*Math.PI/180;
+    return { x: cx+r*Math.cos(rad), y: cy+r*Math.sin(rad) };
+};
+const arc = (cx,cy,ri,ro,s,e) => {
+    const g=1.8, ss=s+g, ee=e-g;
+    if (ee-ss<=0) return '';
+    const lg=(ee-ss)>180?1:0;
+    const p1=polar(cx,cy,ro,ss), p2=polar(cx,cy,ro,ee);
+    const p3=polar(cx,cy,ri,ee), p4=polar(cx,cy,ri,ss);
+    return `M${p1.x} ${p1.y} A${ro} ${ro} 0 ${lg} 1 ${p2.x} ${p2.y} L${p3.x} ${p3.y} A${ri} ${ri} 0 ${lg} 0 ${p4.x} ${p4.y}Z`;
+};
+
+function Donut({ data }) {
+    const [on, setOn] = useState(false);
+    const [act, setAct] = useState(null);
+    useEffect(() => { const t = setTimeout(()=>setOn(true),80); return ()=>clearTimeout(t); }, []);
+
+    const total = data.reduce((s,d)=>s+d.value,0);
+    const CX=100, CY=100, RI=58, RO=88, RA=94;
+
+    let cum=0;
+    const segs = data.map((d,i) => {
+        const frac=d.value/total, s=cum, e=cum+frac*360;
+        cum=e;
+        return { ...d, frac, s, e, col: COLS[i%COLS.length] };
+    });
+    const active = act!==null ? segs[act] : null;
+
+    return (
+        <div className="donut-grid" style={{ display:'grid', gridTemplateColumns:'176px 1fr', gap:28, alignItems:'center' }}>
+            <div style={{ position:'relative', display:'flex', justifyContent:'center', flexShrink:0 }}>
+                <svg width="176" height="176" viewBox="0 0 200 200">
+                    <circle cx={CX} cy={CY} r={(RI+RO)/2} fill="none"
+                        stroke="rgba(255,255,255,0.04)" strokeWidth={RO-RI}/>
+                    {segs.map((seg,i) => {
+                        const isA = act===i;
+                        return (
+                            <path key={i} d={arc(CX,CY,RI,isA?RA:RO,seg.s,seg.e)}
+                                fill={seg.col}
+                                style={{
+                                    opacity: on ? (act===null||isA ? 1 : 0.2) : 0,
+                                    filter: isA ? `drop-shadow(0 0 12px ${seg.col}aa)` : 'none',
+                                    transition: 'opacity 0.18s, filter 0.18s',
+                                    animation: on ? `segPop 0.48s cubic-bezier(.34,1.56,.64,1) ${i*0.065}s both` : 'none',
+                                    cursor: 'pointer',
+                                }}
+                                onMouseEnter={() => setAct(i)}
+                                onMouseLeave={() => setAct(null)}
+                            />
+                        );
+                    })}
+                </svg>
+                <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none', width:104 }}>
+                    {active ? (<>
+                        <div style={{ fontSize:9, fontWeight:500, color:active.col, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:3, fontFamily:'Barlow,sans-serif' }}>{active.name}</div>
+                        <div className="font-mono" style={{ fontSize:18, fontWeight:500, color:'#fff', lineHeight:1 }}>{fmt$(active.value)}</div>
+                        <div style={{ fontSize:22, fontWeight:600, color:active.col, marginTop:4, fontFamily:'DM Mono,monospace', lineHeight:1 }}>{(active.frac*100).toFixed(0)}%</div>
+                    </>) : (<>
+                        <div style={{ fontSize:8, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.25)', marginBottom:4, fontFamily:'Barlow,sans-serif', fontWeight:500 }}>Total</div>
+                        <div className="font-mono" style={{ fontSize:20, fontWeight:500, color:'#fff', lineHeight:1 }}>{fmt$(total)}</div>
+                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.25)', marginTop:5 }}>{data.length} categorías</div>
+                    </>)}
+                </div>
+            </div>
+
+            <div className="donut-list" style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                {segs.map((seg,i) => (
+                    <div key={i} className="fade-up"
+                        style={{ animationDelay:`${i*0.055}s`, cursor:'pointer',
+                            opacity: act===null||act===i ? 1 : 0.22,
+                            transition: 'opacity 0.15s' }}
+                        onMouseEnter={() => setAct(i)}
+                        onMouseLeave={() => setAct(null)}
+                    >
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:5 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                <div style={{ width:6, height:6, borderRadius:'50%', background:seg.col, flexShrink:0, boxShadow:`0 0 6px ${seg.col}99` }}/>
+                                <span style={{ fontSize:12, fontWeight:300, color: act===i?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.5)', transition:'all 0.15s', fontFamily:'Barlow,sans-serif' }}>{seg.name}</span>
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                                <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)', fontFamily:'DM Mono,monospace' }}>{(seg.frac*100).toFixed(1)}%</span>
+                                <span className="font-mono" style={{ fontSize:13, color:act===i ? seg.col : 'rgba(255,255,255,0.88)', fontWeight:500, minWidth:66, textAlign:'right', transition:'color 0.15s' }}>{fmt$(seg.value)}</span>
+                            </div>
+                        </div>
+                        <div style={{ height:1, background:'rgba(255,255,255,0.05)', borderRadius:99, overflow:'hidden' }}>
+                            <div style={{
+                                height:'100%',
+                                width: on ? `${seg.frac*100}%` : '0%',
+                                background:`linear-gradient(90deg, ${seg.col}44, ${seg.col})`,
+                                borderRadius:99,
+                                transition:`width ${0.6+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.04}s`
+                            }}/>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ── Monthly bars ───────────────────────────────────────────────────
+function MonthBars({ data }) {
+    const [on, setOn] = useState(false);
+    useEffect(() => { const t=setTimeout(()=>setOn(true),200); return ()=>clearTimeout(t); },[]);
+    if (!data || data.length < 2) return null;
+    const max = Math.max(...data.map(d=>d.total));
+    const H = 90;
+    return (
+        <div>
+            <p style={{ fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:18, fontFamily:'Barlow,sans-serif' }}>Tendencia mensual</p>
+            <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:H+22 }}>
+                {data.map((d,i) => {
+                    const pct = max>0 ? (d.total/max)*100 : 0;
+                    const h = Math.max(pct/100*H, 4);
+                    const isLast = i===data.length-1;
+                    return (
+                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
+                            <div className="font-mono" style={{
+                                fontSize:8, color:isLast?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.22)',
+                                marginBottom:5, whiteSpace:'nowrap',
+                                opacity: on ? 1 : 0, transition:`opacity 0.4s ${i*0.06}s`
+                            }}>{fmt$(d.total)}</div>
+                            <div style={{
+                                width:'100%', height:h,
+                                borderRadius:'3px 3px 0 0',
+                                background: isLast
+                                    ? 'linear-gradient(180deg, #fb8500, #f72585)'
+                                    : 'rgba(255,255,255,0.1)',
+                                transform: on ? 'scaleY(1)' : 'scaleY(0)',
+                                transformOrigin: 'bottom',
+                                transition:`transform 0.6s cubic-bezier(.4,0,.2,1) ${i*0.05}s`,
+                                boxShadow: isLast ? '0 0 20px rgba(247,37,133,0.35)' : 'none',
+                            }}/>
+                            <div style={{ fontSize:8, color:isLast?'#fb8500':'rgba(255,255,255,0.22)', marginTop:5, whiteSpace:'nowrap', fontFamily:'DM Mono,monospace' }}>{d.mes}</div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────
+const Skel = ({ w='80%', h=22 }) => <div className="skel" style={{ width:w, height:h }}/>;
+
+// ── KPI Card ───────────────────────────────────────────────────────
+function KPI({ label, val, sub, loading, accent, hero }) {
+    return (
+        <div className={hero ? "liquid-glass-strong" : "liquid-glass"}
+            style={{
+                borderRadius: 16,
+                padding: hero ? '22px 24px' : '18px 20px',
+                position:'relative', overflow:'hidden',
+                height: hero ? '100%' : undefined,
+                boxShadow: hero ? '0 0 60px -10px rgba(247,37,133,0.12), 0 0 60px -20px rgba(114,9,183,0.1)' : undefined,
+            }}>
+            <div style={{ fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.32)', marginBottom:10, textTransform:'uppercase', letterSpacing:'0.09em', fontFamily:'Barlow,sans-serif' }}>{label}</div>
+            {loading ? <Skel h={hero?34:22}/> :
+                <div className="font-mono" style={{ fontSize:hero?30:20, fontWeight:500, color:accent||'rgba(255,255,255,0.9)', letterSpacing:'-0.03em', lineHeight:1 }}>{val}</div>
             }
-        };
+            {sub && <div style={{ fontSize:10, color:'rgba(255,255,255,0.28)', marginTop:8, fontFamily:'Barlow,sans-serif', fontWeight:300 }}>{sub}</div>}
+        </div>
+    );
+}
 
-        class ErrorBoundary extends React.Component {
-            constructor(props) {
-                super(props);
-                this.state = { hasError: false, error: null };
-            }
-            static getDerivedStateFromError(error) {
-                return { hasError: true, error };
-            }
-            render() {
-                if (this.state.hasError) {
-                    return <div className="p-10 text-red-500 font-mono text-sm whitespace-pre-wrap bg-red-500/10 h-screen">Error de Renderizado: {this.state.error ? this.state.error.toString() : 'Fallo desconocido'}</div>;
-                }
-                return this.props.children; 
-            }
-        }
+// ── Table shell ────────────────────────────────────────────────────
+function TableShell({ title, badge, cols, rightAlign=[], children }) {
+    return (
+        <div className="liquid-glass" style={{ borderRadius:16, overflow:'hidden' }}>
+            <div style={{ padding:'18px 22px', borderBottom:'1px solid rgba(255,255,255,0.04)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <h2 className="font-heading" style={{ fontSize:17, color:'rgba(255,255,255,0.9)' }}>{title}</h2>
+                {badge && <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)', background:'rgba(255,255,255,0.04)', padding:'3px 10px', borderRadius:99, fontFamily:'Barlow,sans-serif' }}>{badge}</span>}
+            </div>
+            <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', whiteSpace:'nowrap' }}>
+                    <thead>
+                        <tr style={{ background:'rgba(255,255,255,0.015)' }}>
+                            {cols.map((h,i) => (
+                                <th key={i} style={{ padding:'9px 18px', fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'0.09em', textAlign:rightAlign.includes(i)?'right':'left', borderBottom:'1px solid rgba(255,255,255,0.04)', fontFamily:'Barlow,sans-serif' }}>{h}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>{children}</tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
 
-        const Icon = ({ name, className }) => {
-            const spanRef = React.useRef(null);
-            React.useEffect(() => {
-                if (spanRef.current) {
-                    spanRef.current.innerHTML = `<i data-lucide="${name}" class="${className || ''}"></i>`;
-                    if (window.lucide) {
-                        window.lucide.createIcons({ root: spanRef.current });
-                    }
-                }
-            }, [name, className]);
-            return <span ref={spanRef} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}></span>;
-        };
+// ── App ────────────────────────────────────────────────────────────
+function App() {
+    const [data,    setData]    = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [tab,     setTab]     = useState('portfolio');
+    const [catF,    setCatF]    = useState('all');
+    const [spinning,setSpin]    = useState(false);
 
-        const CAT_COLORS = ['#3b82f6','#a78bfa','#34d399','#fbbf24','#f472b6','#22d3ee','#fb923c','#e879f9'];
+    const fetchData = useCallback(async () => {
+        setLoading(true); setSpin(true);
+        try {
+            const ctrl = new AbortController();
+            const tid  = setTimeout(()=>ctrl.abort(), 45000);
+            const res  = await fetch(WEBHOOK, { signal: ctrl.signal });
+            clearTimeout(tid);
+            const json = await res.json();
+            const flat = Array.isArray(json) ? json.flat(Infinity) : (json.data ? json.data.flat(Infinity) : []);
+            setData(flat);
+        } catch(e) { console.error(e); }
+        setLoading(false);
+        setTimeout(()=>setSpin(false), 600);
+    }, []);
 
-        // SVG arc helpers
-        const polar = (cx, cy, r, deg) => {
-            const rad = (deg - 90) * Math.PI / 180;
-            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-        };
-        const arcPath = (cx, cy, rIn, rOut, startDeg, endDeg) => {
-            const gap = 1.8;
-            const s = startDeg + gap, e = endDeg - gap;
-            if (e - s <= 0) return '';
-            const lg = (e - s) > 180 ? 1 : 0;
-            const p1 = polar(cx, cy, rOut, s), p2 = polar(cx, cy, rOut, e);
-            const p3 = polar(cx, cy, rIn, e),  p4 = polar(cx, cy, rIn, s);
-            return `M${p1.x} ${p1.y} A${rOut} ${rOut} 0 ${lg} 1 ${p2.x} ${p2.y} L${p3.x} ${p3.y} A${rIn} ${rIn} 0 ${lg} 0 ${p4.x} ${p4.y}Z`;
-        };
+    useEffect(() => { fetchData(); }, []);
 
-        function GastosChart({ data, formatCurrency }) {
-            const [animated, setAnimated] = React.useState(false);
-            const [active, setActive] = React.useState(null);
+    // ── Raw data ─────────────────────────────────────────────────
+    const rawGastos    = data?.filter(d=>d.Categoria==='Gastos')             || [];
+    const rawResumen   = data?.filter(d=>d.Categoria==='Resumen')            || [];
+    const rawPort      = data?.filter(d=>d.Categoria==='Portafolio Abierto') || [];
+    const rawCerradas  = data?.filter(d=>d.Categoria==='Cerradas')           || [];
+    const rawOps       = data?.filter(d=>d.Categoria==='Operaciones')        || [];
 
-            React.useEffect(() => {
-                const t = setTimeout(() => setAnimated(true), 60);
-                return () => clearTimeout(t);
-            }, []);
+    const gastos    = rawGastos.filter(d=>d.Gasto!==""&&d.Descripción!=="Descripción"&&d.Gasto!=="Gasto");
+    const resumen   = rawResumen.filter(d=>d.col_2!=="Todo lo que gastaste comprando activos"&&typeof d.col_2==='number');
+    const portafolio= rawPort.filter(d=>d["PORTFOLIO ABIERTO"]!=="Ticker"&&d.col_2!=="Tipo"&&d["PORTFOLIO ABIERTO"]);
+    const cerradas  = rawCerradas.filter(d=>d["OPERACIONES CERRADAS"]!=="Fecha Venta"&&d.col_2!=="Ticker"&&d["OPERACIONES CERRADAS"]);
+    const operaciones=rawOps.filter(d=>d["OPERACIONES"]!=="Fecha"&&d.col_2!=="Tipo"&&d["OPERACIONES"]);
 
-            const total = data.reduce((s, d) => s + d.value, 0);
-            const CX = 100, CY = 100, R_IN = 58, R_OUT = 90, R_ACTIVE = 96;
+    let valInv=0, valAct=0, valPyl=0, valNeta=0, valCom=0;
+    resumen.forEach(r => {
+        const k=r["RESUMEN DEL PORTFOLIO"], v=parse$(r.col_2);
+        if(k==="Total invertido") valInv=v;
+        if(k==="Valor actual del portfolio") valAct=v;
+        if(k==="Ganancia si vendieras hoy") valPyl=v;
+        if(k==="Ganancia neta realizada") valNeta=v;
+        if(k==="Total comisiones pagadas") valCom=v;
+    });
 
-            let cumDeg = 0;
-            const segments = data.map((d, i) => {
-                const frac = d.value / total;
-                const startDeg = cumDeg;
-                const endDeg = cumDeg + frac * 360;
-                cumDeg = endDeg;
-                return { ...d, frac, startDeg, endDeg, color: CAT_COLORS[i % CAT_COLORS.length] };
-            });
+    // ── Gastos derived ────────────────────────────────────────────
+    const chartData = useMemo(() => {
+        const map={};
+        gastos.forEach(g => { const c=g.CategoriaGasto||g.Subcategoria||'Otro'; map[c]=(map[c]||0)+parse$(g.Gasto); });
+        return Object.entries(map).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+    }, [gastos]);
 
-            const activeSeg = active !== null ? segments[active] : null;
+    const byMonth = useMemo(() => {
+        const map={};
+        const MES=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        gastos.forEach(g => {
+            if (!g.Fecha) return;
+            const pts=g.Fecha.split('/');
+            if (pts.length<2) return;
+            const m=parseInt(pts[1])||0, y=pts[2]?pts[2].slice(-2):'';
+            const key=`${MES[m]||pts[1]}'${y}`;
+            const ord=`${pts[2]||''}-${String(m).padStart(2,'0')}`;
+            if (!map[key]) map[key]={total:0,ord};
+            map[key].total+=parse$(g.Gasto);
+        });
+        return Object.entries(map).sort(([,a],[,b])=>a.ord.localeCompare(b.ord)).map(([mes,{total}])=>({mes,total}));
+    }, [gastos]);
 
-            const handleEnter = (i) => setActive(i);
-            const handleLeave = () => setActive(null);
-            const handleClick = (i) => setActive(prev => prev === i ? null : i);
+    const totalGasto = gastos.reduce((s,g)=>s+parse$(g.Gasto),0);
+    const maxGasto   = gastos.reduce((mx,g)=>Math.max(mx,parse$(g.Gasto)),0);
+    const maxItem    = gastos.find(g=>parse$(g.Gasto)===maxGasto);
+    const avgGasto   = gastos.length ? totalGasto/gastos.length : 0;
 
-            return (
-                <div className="chart-grid" style={{ padding:'4px 0 20px' }}>
-                    {/* SVG Donut — path-based, exact hit detection */}
-                    <div style={{ position:'relative', display:'flex', justifyContent:'center', flexShrink:0 }}>
-                        <svg width="200" height="200" viewBox="0 0 200 200">
-                            {/* Track */}
-                            <circle cx={CX} cy={CY} r={(R_IN+R_OUT)/2} fill="none"
-                                stroke="rgba(255,255,255,0.04)" strokeWidth={R_OUT-R_IN}/>
-                            {/* Segments */}
-                            {segments.map((seg, i) => {
-                                const isAct = active === i;
-                                const rOut = isAct ? R_ACTIVE : R_OUT;
-                                const d = arcPath(CX, CY, R_IN, rOut, seg.startDeg, seg.endDeg);
+    const filteredG = useMemo(() => {
+        if (catF==='all') return gastos;
+        return gastos.filter(g=>(g.CategoriaGasto||'Otro')===catF);
+    }, [gastos, catF]);
+
+    const pos = v => v >= 0;
+
+    return (
+        <div style={{ minHeight:'100vh', paddingBottom:72 }}>
+
+            {/* ── Header ──────────────────────────────────────── */}
+            <header className="glass-nav" style={{ position:'sticky', top:0, zIndex:50 }}>
+                <div style={{ maxWidth:1260, margin:'0 auto', padding:'0 24px' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingTop:16, paddingBottom:0 }}>
+                        {/* Logo */}
+                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                            <div style={{ width:28, height:28, borderRadius:8, background:'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(255,255,255,0.12)' }}>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 3v18h18"/><path d="M18 17l-5-5-4 4-3-3"/>
+                                </svg>
+                            </div>
+                            <span className="font-heading" style={{ fontSize:17, color:'rgba(255,255,255,0.85)', letterSpacing:'-0.01em' }}>Finanzas</span>
+                        </div>
+                        {/* Refresh */}
+                        <button onClick={fetchData}
+                            style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:99, padding:'6px 14px', fontSize:12, color:'rgba(255,255,255,0.5)', cursor:'pointer', outline:'none', transition:'all 0.15s', fontFamily:'Barlow,sans-serif', fontWeight:400 }}
+                            onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.07)';e.currentTarget.style.color='rgba(255,255,255,0.8)'}}
+                            onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.color='rgba(255,255,255,0.5)'}}>
+                            <span style={{ display:'inline-block', animation:spinning?'spin 0.6s linear infinite':'none' }}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                            </span>
+                            Actualizar
+                        </button>
+                    </div>
+                    {/* Nav */}
+                    <nav className="noscroll" style={{ display:'flex', gap:0, marginTop:4 }}>
+                        {[{id:'portfolio',lbl:'Portafolio'},{id:'activity',lbl:'Operaciones'},{id:'expenses',lbl:'Gastos'}].map(t => (
+                            <button key={t.id} className={`tab ${tab===t.id?'active':''}`}
+                                style={{ marginRight:24 }}
+                                onClick={()=>setTab(t.id)}>
+                                {t.lbl}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            </header>
+
+            <main className="main-content" style={{ maxWidth:1260, margin:'0 auto', padding:'28px 24px 0' }}>
+
+                {/* ══════════════ PORTAFOLIO ══════════════ */}
+                {tab==='portfolio' && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }} className="grid4">
+                            {[
+                                { label:'Capital Invertido', val:fmt$(valInv) },
+                                { label:'Valor Actual', val:fmt$(valAct) },
+                                { label:'PyL si vendes hoy', val:(pos(valPyl)?'+':'')+fmt$(valPyl), accent:pos(valPyl)?'var(--green)':'var(--red)' },
+                                { label:'Ganancia Realizada', val:(pos(valNeta)?'+':'')+fmt$(valNeta), accent:pos(valNeta)?'var(--green)':'var(--red)', sub:`Comisiones: ${fmt$(valCom)}` },
+                            ].map((c,i) => <KPI key={i} {...c} loading={loading}/>)}
+                        </div>
+
+                        <TableShell title="Posiciones Abiertas" badge={`${portafolio.length} activos`}
+                            cols={['Activo','Cantidad','P. Promedio','P. Actual','P/L $','Rend. %']} rightAlign={[1,2,3,4,5]}>
+                            {portafolio.map((p,i) => {
+                                const g=parse$(p.col_7), isP=pos(g);
                                 return (
-                                    <path key={i} d={d} fill={seg.color}
-                                        style={{
-                                            opacity: animated ? (active === null || isAct ? 1 : 0.35) : 0,
-                                            filter: isAct ? `drop-shadow(0 0 8px ${seg.color})` : 'none',
-                                            transition: `opacity 0.2s ease, filter 0.2s ease`,
-                                            animation: animated ? `seg-pop 0.5s cubic-bezier(.34,1.56,.64,1) ${i*0.07}s both` : 'none',
-                                            cursor: 'pointer',
-                                        }}
-                                        onMouseEnter={() => handleEnter(i)}
-                                        onMouseLeave={handleLeave}
-                                        onClick={() => handleClick(i)}
-                                    />
+                                    <tr key={i} className="tr">
+                                        <td style={{ padding:'12px 18px' }}>
+                                            <span style={{ fontWeight:500, color:'rgba(255,255,255,0.88)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>{p["PORTFOLIO ABIERTO"]}</span>
+                                            <span style={{ marginLeft:7, fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{p.col_2}</span>
+                                        </td>
+                                        <td className="font-mono" style={{ padding:'12px 18px', textAlign:'right', color:'rgba(255,255,255,0.5)', fontSize:13 }}>{p.col_3}</td>
+                                        <td className="font-mono" style={{ padding:'12px 18px', textAlign:'right', color:'rgba(255,255,255,0.3)', fontSize:13 }}>{p.col_4}</td>
+                                        <td className="font-mono" style={{ padding:'12px 18px', textAlign:'right', color:'rgba(255,255,255,0.78)', fontWeight:500, fontSize:13 }}>{p.col_5}</td>
+                                        <td className="font-mono" style={{ padding:'12px 18px', textAlign:'right', fontWeight:500, fontSize:13, color:isP?'var(--green)':'var(--red)' }}>{isP?'+':''}{fmt$(g)}</td>
+                                        <td style={{ padding:'12px 18px', textAlign:'right' }}>
+                                            <span style={{ fontSize:11, fontWeight:500, padding:'3px 9px', borderRadius:99, background:isP?'rgba(16,185,129,0.1)':'rgba(244,63,94,0.1)', color:isP?'var(--green)':'var(--red)', fontFamily:'Barlow,sans-serif' }}>{fmtPct(p.col_8)}</span>
+                                        </td>
+                                    </tr>
                                 );
                             })}
-                        </svg>
-                        {/* Center label */}
-                        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none', width:'108px' }}>
-                            {activeSeg ? (
-                                <>
-                                    <div style={{ fontSize:'10px', fontWeight:700, color:activeSeg.color, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:'3px' }}>{activeSeg.name}</div>
-                                    <div style={{ fontSize:'19px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(activeSeg.value)}</div>
-                                    <div style={{ fontSize:'13px', color:activeSeg.color, marginTop:'5px', fontWeight:600 }}>{(activeSeg.frac*100).toFixed(1)}%</div>
-                                </>
-                            ) : (
-                                <>
-                                    <div style={{ fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'#475569', marginBottom:'3px' }}>Total</div>
-                                    <div style={{ fontSize:'19px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{formatCurrency(total)}</div>
-                                    <div style={{ fontSize:'11px', color:'#475569', marginTop:'4px' }}>{data.length} categ.</div>
-                                </>
+                            {portafolio.length===0 && <tr><td colSpan={6} style={{ padding:'48px', textAlign:'center', color:'rgba(255,255,255,0.22)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>Sin posiciones abiertas.</td></tr>}
+                        </TableShell>
+                    </div>
+                )}
+
+                {/* ══════════════ OPERACIONES ══════════════ */}
+                {tab==='activity' && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                        <TableShell title="Ventas Cerradas" cols={['Fecha','Activo','Cant.','P. Venta','Comisión','Ganancia Neta']} rightAlign={[2,3,4,5]}>
+                            {cerradas.map((c,i) => {
+                                const n=parse$(c.col_9), isP=pos(n);
+                                return (
+                                    <tr key={i} className="tr">
+                                        <td style={{ padding:'11px 18px', fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'DM Mono,monospace' }}>{c["OPERACIONES CERRADAS"]}</td>
+                                        <td style={{ padding:'11px 18px' }}>
+                                            <span style={{ fontWeight:500, color:'rgba(255,255,255,0.88)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>{c.col_2}</span>
+                                            <span style={{ marginLeft:6, fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{c.col_3}</span>
+                                        </td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', color:'rgba(255,255,255,0.5)', fontSize:13 }}>{c.col_4}</td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', color:'rgba(255,255,255,0.5)', fontSize:13 }}>{c.col_5}</td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', color:'rgba(255,255,255,0.3)', fontSize:12 }}>{c.col_8}</td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', fontWeight:500, fontSize:13, color:isP?'var(--green)':'var(--red)' }}>{isP?'+':''}{fmt$(n)}</td>
+                                    </tr>
+                                );
+                            })}
+                            {cerradas.length===0 && <tr><td colSpan={6} style={{ padding:'44px', textAlign:'center', color:'rgba(255,255,255,0.22)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>Sin ventas registradas.</td></tr>}
+                        </TableShell>
+
+                        <TableShell title="Registro de Transacciones" cols={['Fecha','Tipo','Activo','Cant.','Precio','Total']} rightAlign={[3,4,5]}>
+                            {operaciones.map((op,i) => {
+                                const isC = op.col_4?.toLowerCase()==='compra';
+                                return (
+                                    <tr key={i} className="tr">
+                                        <td style={{ padding:'11px 18px', fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'DM Mono,monospace' }}>{op["OPERACIONES"]}</td>
+                                        <td style={{ padding:'11px 18px' }}>
+                                            <span style={{ fontSize:11, fontWeight:400, padding:'3px 10px', borderRadius:99, background:isC?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)', color:isC?'rgba(165,180,252,0.9)':'rgba(255,255,255,0.45)', fontFamily:'Barlow,sans-serif' }}>{op.col_4}</span>
+                                        </td>
+                                        <td style={{ padding:'11px 18px', fontWeight:500, color:'rgba(255,255,255,0.88)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>{op.col_3}</td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', color:'rgba(255,255,255,0.5)', fontSize:13 }}>{op.col_5}</td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', color:'rgba(255,255,255,0.5)', fontSize:13 }}>{op.col_6}</td>
+                                        <td className="font-mono" style={{ padding:'11px 18px', textAlign:'right', fontWeight:500, color:'rgba(255,255,255,0.78)', fontSize:13 }}>{op.col_7}</td>
+                                    </tr>
+                                );
+                            })}
+                            {operaciones.length===0 && <tr><td colSpan={6} style={{ padding:'44px', textAlign:'center', color:'rgba(255,255,255,0.22)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>Sin transacciones.</td></tr>}
+                        </TableShell>
+                    </div>
+                )}
+
+                {/* ══════════════ GASTOS ══════════════ */}
+                {tab==='expenses' && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+
+                        {/* KPI strip */}
+                        <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr', gap:10 }} className="grid4">
+                            <div className="grid4-hero">
+                            <KPI hero label="Gasto Total"
+                                val={fmt$(totalGasto)}
+                                sub={`${gastos.length} transacciones · ${chartData.length} categorías`}
+                                loading={loading}/>
+                            </div>
+                            <KPI label="Promedio" val={fmt$(avgGasto)} sub="por transacción" loading={loading}/>
+                            <KPI label="Mayor Gasto" val={fmt$(maxGasto)} sub={maxItem?.Descripción?.slice(0,24)||'—'} loading={loading}/>
+                            <KPI label="Categorías" val={chartData.length} sub={`top: ${chartData[0]?.name||'—'}`} loading={loading}/>
+                        </div>
+
+                        {/* Chart row */}
+                        <div style={{ display:'grid', gridTemplateColumns: byMonth.length>=2 ? '1fr 220px' : '1fr', gap:12 }} className="split">
+                            {chartData.length > 0 && (
+                                <div className="liquid-glass" style={{ borderRadius:16, padding:'22px 26px' }}>
+                                    <h2 className="font-heading" style={{ fontSize:16, color:'rgba(255,255,255,0.85)', marginBottom:20, paddingBottom:16, borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+                                        Desglose por Categoría
+                                    </h2>
+                                    <Donut data={chartData}/>
+                                </div>
+                            )}
+                            {byMonth.length >= 2 && (
+                                <div className="liquid-glass" style={{ borderRadius:16, padding:'22px 24px' }}>
+                                    <MonthBars data={byMonth}/>
+                                </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* Category list */}
-                    <div style={{ display:'flex', flexDirection:'column', gap:'11px' }}>
-                        {segments.map((seg, i) => (
-                            <div key={i} className="cat-row"
-                                style={{ animationDelay:`${i*0.06}s`, cursor:'pointer',
-                                    opacity: active === null || active === i ? 1 : 0.4,
-                                    transition:'opacity 0.18s ease' }}
-                                onMouseEnter={() => handleEnter(i)}
-                                onMouseLeave={handleLeave}
-                                onClick={() => handleClick(i)}
-                            >
-                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'5px' }}>
-                                    <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                                        <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:seg.color, flexShrink:0, boxShadow:`0 0 4px ${seg.color}` }}/>
-                                        <span style={{ fontSize:'13px', color: active===i?'#f1f5f9':'#94a3b8', fontWeight: active===i?600:400, transition:'all 0.15s' }}>{seg.name}</span>
-                                    </div>
-                                    <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                                        <span style={{ fontSize:'11px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{(seg.frac*100).toFixed(1)}%</span>
-                                        <span style={{ fontSize:'13px', color:'#f1f5f9', fontWeight:600, fontVariantNumeric:'tabular-nums', minWidth:'72px', textAlign:'right' }}>{formatCurrency(seg.value)}</span>
-                                    </div>
+                        {/* Transactions table */}
+                        <div className="liquid-glass" style={{ borderRadius:16, overflow:'hidden' }}>
+                            {/* Header + filters */}
+                            <div style={{ padding:'18px 20px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:13 }}>
+                                    <h2 className="font-heading" style={{ fontSize:16, color:'rgba(255,255,255,0.85)' }}>Transacciones</h2>
+                                    <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{filteredG.length} registros</span>
                                 </div>
-                                <div style={{ height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'999px', overflow:'hidden' }}>
-                                    <div style={{ height:'100%', width:`${animated?seg.frac*100:0}%`, background:`linear-gradient(90deg,${seg.color}88,${seg.color})`, borderRadius:'999px', transition:`width ${0.7+i*0.08}s cubic-bezier(.4,0,.2,1) ${i*0.04}s` }}/>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        function App() {
-            const [data, setData] = useState(null);
-            const [loading, setLoading] = useState(true);
-            const [activeTab, setActiveTab] = useState('portfolio'); // 'portfolio', 'activity', 'expenses'
-
-            useEffect(() => {
-                fetchData();
-            }, []);
-
-            const fetchData = async () => {
-                setLoading(true);
-                try {
-                    const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 45000);
-                    const res = await fetch(WEBHOOK_URL, { signal: controller.signal });
-                    clearTimeout(timeout);
-                    const json = await res.json();
-                    const flatData = Array.isArray(json)
-                        ? json.flat(Infinity)
-                        : (json.data ? json.data.flat(Infinity) : []);
-                    setData(flatData);
-                } catch (err) {
-                    console.error('Error fetching data:', err);
-                }
-                setLoading(false);
-            };
-
-
-            const rawGastos = data?.filter(d => d.Categoria === 'Gastos') || [];
-            const rawResumen = data?.filter(d => d.Categoria === 'Resumen') || [];
-            const rawPortafolio = data?.filter(d => d.Categoria === 'Portafolio Abierto') || [];
-            const rawCerradas = data?.filter(d => d.Categoria === 'Cerradas') || [];
-            const rawOperaciones = data?.filter(d => d.Categoria === 'Operaciones') || [];
-
-            const gastos = rawGastos.filter(d => d.Gasto !== "" && d.Descripción !== "Descripción" && d.Gasto !== "Gasto");
-            const resumen = rawResumen.filter(d => d.col_2 !== "Todo lo que gastaste comprando activos" && typeof d.col_2 === 'number');
-            const portafolio = rawPortafolio.filter(d => d["PORTFOLIO ABIERTO"] !== "Ticker" && d.col_2 !== "Tipo" && d["PORTFOLIO ABIERTO"]);
-            const cerradas = rawCerradas.filter(d => d["OPERACIONES CERRADAS"] !== "Fecha Venta" && d.col_2 !== "Ticker" && d["OPERACIONES CERRADAS"]);
-            const operaciones = rawOperaciones.filter(d => d["OPERACIONES"] !== "Fecha" && d.col_2 !== "Tipo" && d["OPERACIONES"]);
-
-            let valInvertido = 0, valActual = 0, valGananciaSiVendes = 0, valGananciaNeta = 0, valComisiones = 0;
-            resumen.forEach(r => {
-                const key = r["RESUMEN DEL PORTFOLIO"];
-                const val = parseNumber(r.col_2);
-                if (key === "Total invertido") valInvertido = val;
-                if (key === "Valor actual del portfolio") valActual = val;
-                if (key === "Ganancia si vendieras hoy") valGananciaSiVendes = val;
-                if (key === "Ganancia neta realizada") valGananciaNeta = val;
-                if (key === "Total comisiones pagadas") valComisiones = val;
-            });
-
-            const gastosChartData = (() => {
-                const map = {};
-                gastos.forEach(g => {
-                    const cat = g.CategoriaGasto || g.Subcategoria || 'Otro';
-                    map[cat] = (map[cat] || 0) + parseNumber(g.Gasto);
-                });
-                return Object.keys(map).map(key => ({ name: key, value: map[key] })).sort((a,b)=>b.value-a.value);
-            })();
-
-            const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
-
-            return (
-                <div className="min-h-screen flex flex-col items-center pb-24">
-                    
-                    {/* Header Strip */}
-                    <header className="w-full bg-[#0a1120] border-b border-white/[0.06] sticky top-0 z-40 backdrop-blur-md">
-                        <div className="max-w-[1240px] w-full mx-auto px-6 sm:px-8">
-                            <div className="py-5 flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                    <h1 className="text-lg font-semibold text-slate-100 tracking-tight">Finanzas Personales</h1>
-                                </div>
-                            </div>
-                            
-                            {/* Navigation */}
-                            <nav className="nav-scroll flex mt-1" style={{ gap:0 }}>
-                                {[
-                                    { id:'portfolio', label:'Portafolio' },
-                                    { id:'activity',  label:'Operaciones' },
-                                    { id:'expenses',  label:'Gastos' },
-                                ].map(tab => (
-                                    <button key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`nav-tab pb-4 text-sm font-medium ${activeTab === tab.id ? 'active' : ''}`}
-                                        style={{ marginRight:'28px', whiteSpace:'nowrap' }}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
-                    </header>
-
-                    <main className="w-full max-w-[1240px] mx-auto mt-6 space-y-6" style={{ padding:'0 16px' }}>
-                        
-                        {/* ===================== TAB: PORTFOLIO ===================== */}
-                        {activeTab === 'portfolio' && (
-                            <div className="space-y-6">
-
-                                {/* Top KPI Cards */}
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                    {[
-                                        { label:'Capital Invertido', val: formatCurrency(valInvertido), color:'text-slate-100' },
-                                        { label:'Valor Actual',      val: formatCurrency(valActual),    color: valActual >= valInvertido ? 'text-slate-100':'text-slate-300' },
-                                        { label:'PyL vendiendo hoy', val: (valGananciaSiVendes>=0?'+':'')+formatCurrency(valGananciaSiVendes), color: valGananciaSiVendes>=0?'text-emerald-500':'text-red-500' },
-                                        { label:'Ganancia Realizada', val: (valGananciaNeta>=0?'+':'')+formatCurrency(valGananciaNeta), color: valGananciaNeta>=0?'text-emerald-500':'text-red-500', sub: loading ? null : `Comisiones: ${formatCurrency(valComisiones)}` },
-                                    ].map((c,i) => (
-                                        <div key={i} className="saas-card p-4 flex flex-col">
-                                            <h3 className="text-slate-400 text-xs font-medium mb-2">{c.label}</h3>
-                                            {loading
-                                                ? <div style={{marginTop:4}}><div style={{height:28,width:'80%',borderRadius:6,background:'rgba(255,255,255,0.06)',animation:'sk-pulse 1.5s ease-in-out infinite'}}/></div>
-                                                : <span className={`text-xl font-semibold number-font ${c.color}`}>{c.val}</span>
-                                            }
-                                            {c.sub && <p className="text-xs text-slate-500 mt-1">{c.sub}</p>}
-                                        </div>
+                                {/* Category filters */}
+                                <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                                    <button className={`pill ${catF==='all'?'on':''}`} onClick={()=>setCatF('all')}>Todo</button>
+                                    {chartData.map((c,i) => (
+                                        <button key={c.name}
+                                            className={`pill ${catF===c.name?'on':''}`}
+                                            style={catF===c.name?{borderColor:`${COLS[i%COLS.length]}44`,color:COLS[i%COLS.length]}:{}}
+                                            onClick={()=>setCatF(catF===c.name?'all':c.name)}>
+                                            <span style={{ width:5, height:5, borderRadius:'50%', background:COLS[i%COLS.length], display:'inline-block', flexShrink:0 }}/>
+                                            {c.name}
+                                        </button>
                                     ))}
                                 </div>
-
-                                {/* Open Positions Table */}
-                                <div className="saas-card overflow-hidden">
-                                    <div className="px-6 py-5 border-b border-white/[0.04] flex items-center justify-between">
-                                        <h2 className="text-base font-semibold text-slate-100">Posiciones Abiertas</h2>
-                                        <span className="text-xs font-medium bg-slate-800 text-slate-300 px-2 py-1 rounded">{portafolio.length} Activos</span>
-                                    </div>
-                                    
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left whitespace-nowrap">
-                                            <thead className="bg-[#0b1220] border-b border-white/[0.04]">
-                                                <tr>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Activo</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Cantidad</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Precio Promedio</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Precio Actual</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">P/L $</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Rend. %</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-white/[0.02]">
-                                                {portafolio.map((p, i) => {
-                                                    const ganancia = parseNumber(p.col_7);
-                                                    const isPositive = ganancia >= 0;
-                                                    return (
-                                                        <tr key={i} className="text-sm table-row-hover">
-                                                            <td className="px-6 py-3.5">
-                                                                <div className="flex items-center">
-                                                                    <span className="font-semibold text-slate-200">{p["PORTFOLIO ABIERTO"]}</span>
-                                                                    <span className="ml-2 text-xs text-slate-500">{p.col_2}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-300 number-font">{p.col_3}</td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-400 number-font">{p.col_4}</td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-200 number-font font-medium">{p.col_5}</td>
-                                                            <td className={`px-6 py-3.5 text-right font-medium number-font ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                                {isPositive ? '+' : ''}{formatCurrency(ganancia)}
-                                                            </td>
-                                                            <td className="px-6 py-3.5 text-right">
-                                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${isPositive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                                    {formatPercentage(p.col_8)}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {portafolio.length === 0 && (
-                                                    <tr><td colSpan="6" className="px-6 py-6 text-center text-slate-500 text-sm">Sin posiciones abiertas.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
                             </div>
-                        )}
 
-                        {/* ===================== TAB: HISTORY ===================== */}
-                        {activeTab === 'activity' && (
-                            <div className="space-y-8 animate-fade-in">
-                                
-                                <div className="saas-card overflow-hidden">
-                                    <div className="px-6 py-5 border-b border-white/[0.04]">
-                                        <h2 className="text-base font-semibold text-slate-100">Ventas Cerradas</h2>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left whitespace-nowrap">
-                                            <thead className="bg-[#0b1220] border-b border-white/[0.04]">
-                                                <tr>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Fecha</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Activo</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Cant.</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">P. Venta</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Comisión</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Ganancia Neta</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-white/[0.02]">
-                                                {cerradas.map((c, i) => {
-                                                    const neta = parseNumber(c.col_9);
-                                                    const isPositive = neta >= 0;
-                                                    return (
-                                                        <tr key={i} className="text-sm table-row-hover">
-                                                            <td className="px-6 py-3.5 text-slate-400 text-xs">{c["OPERACIONES CERRADAS"]}</td>
-                                                            <td className="px-6 py-3.5">
-                                                                <span className="font-semibold text-slate-200">{c.col_2}</span>
-                                                                <span className="ml-2 text-xs text-slate-500">{c.col_3}</span>
-                                                            </td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-300 number-font">{c.col_4}</td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-300 number-font">{c.col_5}</td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-500 number-font">{c.col_8}</td>
-                                                            <td className={`px-6 py-3.5 text-right font-medium number-font ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                                {isPositive ? '+' : ''}{formatCurrency(neta)}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {cerradas.length === 0 && (
-                                                    <tr><td colSpan="6" className="px-6 py-6 text-center text-slate-500 text-sm">No hay registro de ventas.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div className="saas-card overflow-hidden">
-                                    <div className="px-6 py-5 border-b border-white/[0.04]">
-                                        <h2 className="text-base font-semibold text-slate-100">Registro de Transacciones</h2>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left whitespace-nowrap">
-                                            <thead className="bg-[#0b1220] border-b border-white/[0.04]">
-                                                <tr>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Fecha</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Tipo</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Activo</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Cant.</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Precio</th>
-                                                    <th className="px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-white/[0.02]">
-                                                {operaciones.map((op, i) => {
-                                                    const isCompra = op.col_4?.toLowerCase() === 'compra';
-                                                    return (
-                                                        <tr key={i} className="text-sm table-row-hover">
-                                                            <td className="px-6 py-3.5 text-slate-400 text-xs">{op["OPERACIONES"]}</td>
-                                                            <td className="px-6 py-3.5">
-                                                                <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded ${isCompra ? 'text-blue-400 bg-blue-400/10' : 'text-slate-300 bg-slate-400/10'}`}>
-                                                                    {op.col_4}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-3.5"><span className="font-semibold text-slate-200">{op.col_3}</span></td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-300 number-font">{op.col_5}</td>
-                                                            <td className="px-6 py-3.5 text-right text-slate-300 number-font">{op.col_6}</td>
-                                                            <td className="px-6 py-3.5 text-right font-medium text-slate-200 number-font">{op.col_7}</td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {operaciones.length === 0 && (
-                                                    <tr><td colSpan="6" className="px-6 py-6 text-center text-slate-500 text-sm">Libro de órdenes vacío.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                            </div>
-                        )}
-
-                        {/* ===================== TAB: EXPENSES ===================== */}
-                        {activeTab === 'expenses' && (
-                            <div className="space-y-6 animate-fade-in">
-
-                                {/* Stats row */}
-                                {(() => {
-                                    const totalGasto = gastos.reduce((s,g) => s + parseNumber(g.Gasto), 0);
-                                    const maxGasto = gastos.reduce((mx,g) => Math.max(mx, parseNumber(g.Gasto)), 0);
-                                    const maxItem = gastos.find(g => parseNumber(g.Gasto) === maxGasto);
-                                    return (
-                                        <div className="stats-grid">
-                                            {[
-                                                { label:'Gasto total', value: formatCurrency(totalGasto), sub: `${gastos.length} transacciones` },
-                                                { label:'Promedio por gasto', value: formatCurrency(gastos.length ? totalGasto/gastos.length : 0), sub: 'promedio simple' },
-                                                { label:'Mayor gasto', value: formatCurrency(maxGasto), sub: maxItem?.Descripción || '' },
-                                            ].map((s,i) => (
-                                                <div key={i} className="saas-card" style={{ padding:'20px 24px' }}>
-                                                    <div style={{ fontSize:'12px', color:'#64748b', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</div>
-                                                    <div style={{ fontSize:'22px', fontWeight:700, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', letterSpacing:'-0.02em' }}>{s.value}</div>
-                                                    <div style={{ fontSize:'11px', color:'#475569', marginTop:'4px' }}>{s.sub}</div>
-                                                </div>
+                            {/* Table */}
+                            <div style={{ overflowX:'auto' }}>
+                                <table style={{ width:'100%', borderCollapse:'collapse', whiteSpace:'nowrap' }}>
+                                    <thead>
+                                        <tr style={{ background:'rgba(255,255,255,0.015)' }}>
+                                            <th style={{ width:3, padding:0, borderBottom:'1px solid rgba(255,255,255,0.04)' }}/>
+                                            {['Fecha','Descripción','Categoría','Medio','Importe'].map((h,i)=>(
+                                                <th key={i} style={{ padding:'9px 16px', fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'0.09em', textAlign:i===4?'right':'left', borderBottom:'1px solid rgba(255,255,255,0.04)', fontFamily:'Barlow,sans-serif' }}>{h}</th>
                                             ))}
-                                        </div>
-                                    );
-                                })()}
-
-                                {/* Chart card */}
-                                {gastosChartData.length > 0 && (
-                                    <div className="saas-card" style={{ padding:'24px 28px' }}>
-                                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', paddingBottom:'16px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-                                            <h2 style={{ fontSize:'15px', fontWeight:600, color:'#f1f5f9' }}>Desglose por Categoría</h2>
-                                        </div>
-                                        <GastosChart data={gastosChartData} formatCurrency={formatCurrency} />
-                                    </div>
-                                )}
-
-                                {/* Transactions table */}
-                                <div className="saas-card overflow-hidden">
-                                    <div style={{ padding:'20px 24px', borderBottom:'1px solid rgba(255,255,255,0.04)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                        <h2 style={{ fontSize:'15px', fontWeight:600, color:'#f1f5f9' }}>Transacciones</h2>
-                                        <span style={{ fontSize:'12px', color:'#475569' }}>{gastos.length} registros</span>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left whitespace-nowrap">
-                                            <thead style={{ background:'#0b1220', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-                                                <tr>
-                                                    {['Fecha','Descripción','Categoría','Medio de Pago','Importe'].map((h,i) => (
-                                                        <th key={i} style={{ padding:'10px 20px', fontSize:'11px', fontWeight:500, color:'#475569', textTransform:'uppercase', letterSpacing:'0.07em', textAlign: i===4 ? 'right' : 'left' }}>{h}</th>
-                                                    ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredG.map((g,i) => {
+                                            const ci  = chartData.findIndex(c=>c.name===(g.CategoriaGasto||'Otro'));
+                                            const col = COLS[ci>=0?ci%COLS.length:0];
+                                            return (
+                                                <tr key={i} className="tr">
+                                                    <td style={{ width:3, padding:0, background:col, opacity:0.6, borderBottom:'1px solid rgba(255,255,255,0.03)' }}/>
+                                                    <td className="font-mono" style={{ padding:'11px 16px', fontSize:11, color:'rgba(255,255,255,0.28)' }}>{g.Fecha}</td>
+                                                    <td style={{ padding:'11px 16px', fontSize:13, color:'rgba(255,255,255,0.8)', fontWeight:400, maxWidth:260, overflow:'hidden', textOverflow:'ellipsis', fontFamily:'Barlow,sans-serif' }}>{g.Descripción}</td>
+                                                    <td style={{ padding:'11px 16px' }}>
+                                                        <span className="badge" style={{ background:`${col}12`, color:col, borderColor:`${col}28` }}>
+                                                            <span style={{ width:4, height:4, borderRadius:'50%', background:col, flexShrink:0 }}/>
+                                                            {g.CategoriaGasto||'Otros'}{g.Subcategoria?` · ${g.Subcategoria}`:''}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ padding:'11px 16px', fontSize:12, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{g["Medio de pago"]||'—'}</td>
+                                                    <td style={{ padding:'11px 16px', textAlign:'right' }}>
+                                                        <span className="font-mono" style={{ fontSize:13, fontWeight:500, color:'rgba(255,255,255,0.88)' }}>{fmt$(parse$(g.Gasto))}</span>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {gastos.map((g, i) => {
-                                                    const catIdx = gastosChartData.findIndex(c => c.name === (g.CategoriaGasto || 'Otros'));
-                                                    const color = CAT_COLORS[catIdx >= 0 ? catIdx % CAT_COLORS.length : 0];
-                                                    return (
-                                                        <tr key={i} className="gasto-tr" style={{ borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
-                                                            <td style={{ padding:'12px 20px', fontSize:'12px', color:'#475569', fontVariantNumeric:'tabular-nums' }}>{g.Fecha}</td>
-                                                            <td style={{ padding:'12px 20px', fontSize:'13px', color:'#e2e8f0', fontWeight:500 }}>{g.Descripción}</td>
-                                                            <td style={{ padding:'12px 20px' }}>
-                                                                <span className="cat-badge" style={{ background:`${color}18`, color:color, border:`1px solid ${color}33` }}>
-                                                                    <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:color, flexShrink:0 }}/>
-                                                                    {g.CategoriaGasto || 'Otros'}
-                                                                    {g.Subcategoria ? ` · ${g.Subcategoria}` : ''}
-                                                                </span>
-                                                            </td>
-                                                            <td style={{ padding:'12px 20px', fontSize:'12px', color:'#64748b' }}>{g["Medio de pago"] || '—'}</td>
-                                                            <td style={{ padding:'12px 20px', fontSize:'13px', fontWeight:600, color:'#f1f5f9', fontVariantNumeric:'tabular-nums', textAlign:'right' }}>
-                                                                {formatCurrency(parseNumber(g.Gasto))}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {gastos.length === 0 && (
-                                                    <tr><td colSpan="5" style={{ padding:'32px', textAlign:'center', color:'#475569', fontSize:'13px' }}>No hay consumos registrados.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                            );
+                                        })}
+                                        {filteredG.length===0 && (
+                                            <tr><td colSpan={6} style={{ padding:'56px', textAlign:'center', color:'rgba(255,255,255,0.22)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>
+                                                {catF==='all' ? 'No hay gastos registrados.' : `Sin gastos en "${catF}".`}
+                                            </td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
-                        )}
-                    </main>
-                </div>
-            );
-        }
+                        </div>
+                    </div>
+                )}
+            </main>
+        </div>
+    );
+}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(
-            <ErrorBoundary>
-                <App />
-            </ErrorBoundary>
-        );
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(4px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .animate-fade-in {
-                animation: fadeIn 0.3s ease-out forwards;
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
+ReactDOM.createRoot(document.getElementById('root')).render(<EB><App/></EB>);
+</script>
 </body>
 </html>
