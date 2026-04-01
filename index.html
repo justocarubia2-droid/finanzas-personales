@@ -787,8 +787,8 @@ function App() {
                                     <thead>
                                         <tr style={{ background:'rgba(255,255,255,0.015)' }}>
                                             <th style={{ width:3, padding:0, borderBottom:'1px solid rgba(255,255,255,0.04)' }}/>
-                                            {['Fecha','Descripción','Categoría','Medio','Importe'].map((h,i)=>(
-                                                <th key={i} style={{ padding:'9px 16px', fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'0.09em', textAlign:i===4?'right':'left', borderBottom:'1px solid rgba(255,255,255,0.04)', fontFamily:'Barlow,sans-serif' }}>{h}</th>
+                                            {['Fecha','Descripción','Categoría','Importe'].map((h,i)=>(
+                                                <th key={i} style={{ padding:'9px 16px', fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'0.09em', textAlign:i===3?'right':'left', borderBottom:'1px solid rgba(255,255,255,0.04)', fontFamily:'Barlow,sans-serif' }}>{h}</th>
                                             ))}
                                         </tr>
                                     </thead>
@@ -807,7 +807,6 @@ function App() {
                                                             {g.CategoriaGasto||'Otros'}{g.Subcategoria?` · ${g.Subcategoria}`:''}
                                                         </span>
                                                     </td>
-                                                    <td style={{ padding:'11px 16px', fontSize:12, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{g["Medio de pago"]||'—'}</td>
                                                     <td style={{ padding:'11px 16px', textAlign:'right' }}>
                                                         <span className="font-mono" style={{ fontSize:13, fontWeight:500, color:'rgba(255,255,255,0.88)' }}>{fmt$(parse$(g.Gasto))}</span>
                                                     </td>
@@ -815,7 +814,7 @@ function App() {
                                             );
                                         })}
                                         {filteredG.length===0 && (
-                                            <tr><td colSpan={6} style={{ padding:'56px', textAlign:'center', color:'rgba(255,255,255,0.22)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>
+                                            <tr><td colSpan={5} style={{ padding:'56px', textAlign:'center', color:'rgba(255,255,255,0.22)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>
                                                 {catF==='all' ? 'No hay gastos registrados.' : `Sin gastos en "${catF}".`}
                                             </td></tr>
                                         )}
