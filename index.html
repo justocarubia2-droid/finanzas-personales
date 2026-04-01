@@ -359,7 +359,7 @@ function Donut({ data }) {
 }
 
 // ── Monthly bars ───────────────────────────────────────────────────
-function MonthBars({ data }) {
+function MonthBars({ data, activeOrd, onSelect }) {
     const [on, setOn] = useState(false);
     useEffect(() => { const t=setTimeout(()=>setOn(true),200); return ()=>clearTimeout(t); },[]);
     if (!data || data.length < 2) return null;
@@ -372,26 +372,27 @@ function MonthBars({ data }) {
                 {data.map((d,i) => {
                     const pct = max>0 ? (d.total/max)*100 : 0;
                     const h = Math.max(pct/100*H, 4);
-                    const isLast = i===data.length-1;
+                    const isActive = activeOrd==='all' ? i===data.length-1 : d.ord===activeOrd;
                     return (
-                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
+                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', cursor:'pointer' }}
+                            onClick={()=>onSelect && onSelect(d.ord)}>
                             <div className="font-mono" style={{
-                                fontSize:8, color:isLast?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.22)',
+                                fontSize:8, color:isActive?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.22)',
                                 marginBottom:5, whiteSpace:'nowrap',
                                 opacity: on ? 1 : 0, transition:`opacity 0.4s ${i*0.06}s`
                             }}>{fmt$(d.total)}</div>
                             <div style={{
                                 width:'100%', height:h,
                                 borderRadius:'3px 3px 0 0',
-                                background: isLast
+                                background: isActive
                                     ? 'linear-gradient(180deg, #fb8500, #f72585)'
                                     : 'rgba(255,255,255,0.1)',
                                 transform: on ? 'scaleY(1)' : 'scaleY(0)',
                                 transformOrigin: 'bottom',
                                 transition:`transform 0.6s cubic-bezier(.4,0,.2,1) ${i*0.05}s`,
-                                boxShadow: isLast ? '0 0 20px rgba(247,37,133,0.35)' : 'none',
+                                boxShadow: isActive ? '0 0 20px rgba(247,37,133,0.35)' : 'none',
                             }}/>
-                            <div style={{ fontSize:8, color:isLast?'#fb8500':'rgba(255,255,255,0.22)', marginTop:5, whiteSpace:'nowrap', fontFamily:'DM Mono,monospace' }}>{d.mes}</div>
+                            <div style={{ fontSize:8, color:isActive?'#fb8500':'rgba(255,255,255,0.22)', marginTop:5, whiteSpace:'nowrap', fontFamily:'DM Mono,monospace' }}>{d.mes}</div>
                         </div>
                     );
                 })}
@@ -451,8 +452,9 @@ function TableShell({ title, badge, cols, rightAlign=[], children }) {
 function App() {
     const [data,    setData]    = useState(null);
     const [loading, setLoading] = useState(true);
-    const [tab,     setTab]     = useState('portfolio');
+    const [tab,     setTab]     = useState('expenses');
     const [catF,    setCatF]    = useState('all');
+    const [mesF,    setMesF]    = useState('current');
     const [spinning,setSpin]    = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -495,38 +497,79 @@ function App() {
         if(k==="Total comisiones pagadas") valCom=v;
     });
 
-    // ── Gastos derived ────────────────────────────────────────────
+    // ── Gastos: month list & filter ─────────────────────────────────
+    const MES_NAMES=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    const monthList = useMemo(() => {
+        const map={};
+        gastos.forEach(g => {
+            if (!g.Fecha) return;
+            const pts=g.Fecha.split('/');
+            if (pts.length<2) return;
+            const m=parseInt(pts[1])||0, y=pts[2]||'';
+            const ord=`${y}-${String(m).padStart(2,'0')}`;
+            const label=`${MES_NAMES[m]||pts[1]}'${y.slice(-2)}`;
+            if (!map[ord]) map[ord]={ord,label,m,y};
+        });
+        return Object.values(map).sort((a,b)=>a.ord.localeCompare(b.ord));
+    }, [gastos]);
+
+    const currentMonthOrd = useMemo(() => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    }, []);
+
+    const gastosMes = useMemo(() => {
+        if (mesF==='all') return gastos;
+        const target = mesF==='current' ? currentMonthOrd : mesF;
+        return gastos.filter(g => {
+            if (!g.Fecha) return false;
+            const pts=g.Fecha.split('/');
+            if (pts.length<2) return false;
+            const m=parseInt(pts[1])||0, y=pts[2]||'';
+            const ord=`${y}-${String(m).padStart(2,'0')}`;
+            return ord===target;
+        });
+    }, [gastos, mesF, currentMonthOrd]);
+
+    // ── Gastos derived (from month-filtered) ────────────────────────
     const chartData = useMemo(() => {
         const map={};
-        gastos.forEach(g => { const c=g.CategoriaGasto||g.Subcategoria||'Otro'; map[c]=(map[c]||0)+parse$(g.Gasto); });
+        gastosMes.forEach(g => { const c=g.CategoriaGasto||g.Subcategoria||'Otro'; map[c]=(map[c]||0)+parse$(g.Gasto); });
         return Object.entries(map).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
-    }, [gastos]);
+    }, [gastosMes]);
 
     const byMonth = useMemo(() => {
         const map={};
-        const MES=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         gastos.forEach(g => {
             if (!g.Fecha) return;
             const pts=g.Fecha.split('/');
             if (pts.length<2) return;
             const m=parseInt(pts[1])||0, y=pts[2]?pts[2].slice(-2):'';
-            const key=`${MES[m]||pts[1]}'${y}`;
+            const key=`${MES_NAMES[m]||pts[1]}'${y}`;
             const ord=`${pts[2]||''}-${String(m).padStart(2,'0')}`;
             if (!map[key]) map[key]={total:0,ord};
             map[key].total+=parse$(g.Gasto);
         });
-        return Object.entries(map).sort(([,a],[,b])=>a.ord.localeCompare(b.ord)).map(([mes,{total}])=>({mes,total}));
+        return Object.entries(map).sort(([,a],[,b])=>a.ord.localeCompare(b.ord)).map(([mes,{total,ord}])=>({mes,total,ord}));
     }, [gastos]);
 
-    const totalGasto = gastos.reduce((s,g)=>s+parse$(g.Gasto),0);
-    const maxGasto   = gastos.reduce((mx,g)=>Math.max(mx,parse$(g.Gasto)),0);
-    const maxItem    = gastos.find(g=>parse$(g.Gasto)===maxGasto);
-    const avgGasto   = gastos.length ? totalGasto/gastos.length : 0;
+    const totalGasto = gastosMes.reduce((s,g)=>s+parse$(g.Gasto),0);
+    const maxGasto   = gastosMes.reduce((mx,g)=>Math.max(mx,parse$(g.Gasto)),0);
+    const maxItem    = gastosMes.find(g=>parse$(g.Gasto)===maxGasto);
+    const avgGasto   = gastosMes.length ? totalGasto/gastosMes.length : 0;
 
     const filteredG = useMemo(() => {
-        if (catF==='all') return gastos;
-        return gastos.filter(g=>(g.CategoriaGasto||'Otro')===catF);
-    }, [gastos, catF]);
+        if (catF==='all') return gastosMes;
+        return gastosMes.filter(g=>(g.CategoriaGasto||'Otro')===catF);
+    }, [gastosMes, catF]);
+
+    const activeMesLabel = useMemo(() => {
+        if (mesF==='all') return 'Todo';
+        const target = mesF==='current' ? currentMonthOrd : mesF;
+        const found = monthList.find(m=>m.ord===target);
+        return found ? found.label : 'Este mes';
+    }, [mesF, currentMonthOrd, monthList]);
 
     const pos = v => v >= 0;
 
@@ -657,12 +700,38 @@ function App() {
                 {tab==='expenses' && (
                     <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
 
+                        {/* Month filter */}
+                        <div className="noscroll" style={{ display:'flex', gap:6, alignItems:'center', paddingBottom:2 }}>
+                            <button className={`pill ${mesF==='current'?'on':''}`}
+                                style={mesF==='current'?{borderColor:'rgba(247,37,133,0.4)',color:'#f72585',background:'rgba(247,37,133,0.08)'}:{}}
+                                onClick={()=>{setMesF('current');setCatF('all');}}>
+                                Este mes
+                            </button>
+                            {monthList.map(m => {
+                                const isCur = m.ord===currentMonthOrd;
+                                if (isCur) return null;
+                                const isOn = mesF===m.ord;
+                                return (
+                                    <button key={m.ord} className={`pill ${isOn?'on':''}`}
+                                        style={isOn?{borderColor:'rgba(114,9,183,0.4)',color:'#7209b7',background:'rgba(114,9,183,0.08)'}:{}}
+                                        onClick={()=>{setMesF(isOn?'current':m.ord);setCatF('all');}}>
+                                        {m.label}
+                                    </button>
+                                );
+                            })}
+                            <button className={`pill ${mesF==='all'?'on':''}`}
+                                style={mesF==='all'?{borderColor:'rgba(76,201,240,0.4)',color:'#4cc9f0',background:'rgba(76,201,240,0.08)'}:{}}
+                                onClick={()=>{setMesF('all');setCatF('all');}}>
+                                Todo el año
+                            </button>
+                        </div>
+
                         {/* KPI strip */}
                         <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr', gap:10 }} className="grid4">
                             <div className="grid4-hero">
-                            <KPI hero label="Gasto Total"
+                            <KPI hero label={`Gasto ${activeMesLabel}`}
                                 val={fmt$(totalGasto)}
-                                sub={`${gastos.length} transacciones · ${chartData.length} categorías`}
+                                sub={`${gastosMes.length} transacciones · ${chartData.length} categorías`}
                                 loading={loading}/>
                             </div>
                             <KPI label="Promedio" val={fmt$(avgGasto)} sub="por transacción" loading={loading}/>
@@ -682,7 +751,9 @@ function App() {
                             )}
                             {byMonth.length >= 2 && (
                                 <div className="liquid-glass" style={{ borderRadius:16, padding:'22px 24px' }}>
-                                    <MonthBars data={byMonth}/>
+                                    <MonthBars data={byMonth}
+                                        activeOrd={mesF==='current'?currentMonthOrd:mesF}
+                                        onSelect={(ord)=>{setMesF(ord===currentMonthOrd?'current':ord);setCatF('all');}}/>
                                 </div>
                             )}
                         </div>
