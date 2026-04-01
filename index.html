@@ -21,7 +21,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class', theme: { extend: {} } }</script>
@@ -50,7 +50,8 @@
         }
 
         .font-heading { font-family: 'Instrument Serif', serif; font-style: italic; }
-        .font-mono    { font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+        .font-mono    { font-family: 'Barlow', sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .font-display { font-family: 'Instrument Serif', serif; font-style: italic; letter-spacing: -0.03em; }
 
         /* ── Liquid Glass ─────────────────────────────────── */
         .liquid-glass {
@@ -317,11 +318,11 @@ function Donut({ data }) {
                 <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none', width:104 }}>
                     {active ? (<>
                         <div style={{ fontSize:9, fontWeight:500, color:active.col, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:3, fontFamily:'Barlow,sans-serif' }}>{active.name}</div>
-                        <div className="font-mono" style={{ fontSize:18, fontWeight:500, color:'#fff', lineHeight:1 }}>{fmt$(active.value)}</div>
-                        <div style={{ fontSize:22, fontWeight:600, color:active.col, marginTop:4, fontFamily:'DM Mono,monospace', lineHeight:1 }}>{(active.frac*100).toFixed(0)}%</div>
+                        <div className="font-display" style={{ fontSize:20, color:'#fff', lineHeight:1 }}>{fmt$(active.value)}</div>
+                        <div className="font-display" style={{ fontSize:24, color:active.col, marginTop:4, lineHeight:1 }}>{(active.frac*100).toFixed(0)}%</div>
                     </>) : (<>
                         <div style={{ fontSize:8, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(255,255,255,0.25)', marginBottom:4, fontFamily:'Barlow,sans-serif', fontWeight:500 }}>Total</div>
-                        <div className="font-mono" style={{ fontSize:20, fontWeight:500, color:'#fff', lineHeight:1 }}>{fmt$(total)}</div>
+                        <div className="font-display" style={{ fontSize:22, color:'#fff', lineHeight:1 }}>{fmt$(total)}</div>
                         <div style={{ fontSize:10, color:'rgba(255,255,255,0.25)', marginTop:5 }}>{data.length} categorías</div>
                     </>)}
                 </div>
@@ -342,7 +343,7 @@ function Donut({ data }) {
                                 <span style={{ fontSize:12, fontWeight:300, color: act===i?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.5)', transition:'all 0.15s', fontFamily:'Barlow,sans-serif' }}>{seg.name}</span>
                             </div>
                             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                                <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)', fontFamily:'DM Mono,monospace' }}>{(seg.frac*100).toFixed(1)}%</span>
+                                <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)', fontFamily:'Barlow,sans-serif' }}>{(seg.frac*100).toFixed(1)}%</span>
                                 <span className="font-mono" style={{ fontSize:13, color:act===i ? seg.col : 'rgba(255,255,255,0.88)', fontWeight:500, minWidth:66, textAlign:'right', transition:'color 0.15s' }}>{fmt$(seg.value)}</span>
                             </div>
                         </div>
@@ -396,7 +397,7 @@ function MonthBars({ data, activeOrd, onSelect }) {
                                 transition:`transform 0.6s cubic-bezier(.4,0,.2,1) ${i*0.05}s`,
                                 boxShadow: isActive ? '0 0 20px rgba(247,37,133,0.35)' : 'none',
                             }}/>
-                            <div style={{ fontSize:8, color:isActive?'#fb8500':'rgba(255,255,255,0.22)', marginTop:5, whiteSpace:'nowrap', fontFamily:'DM Mono,monospace' }}>{d.mes}</div>
+                            <div style={{ fontSize:8, color:isActive?'#fb8500':'rgba(255,255,255,0.22)', marginTop:5, whiteSpace:'nowrap', fontFamily:'Barlow,sans-serif' }}>{d.mes}</div>
                         </div>
                     );
                 })}
@@ -421,7 +422,7 @@ function KPI({ label, val, sub, loading, accent, hero }) {
             }}>
             <div style={{ fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.32)', marginBottom:10, textTransform:'uppercase', letterSpacing:'0.09em', fontFamily:'Barlow,sans-serif' }}>{label}</div>
             {loading ? <Skel h={hero?34:22}/> :
-                <div className="font-mono" style={{ fontSize:hero?30:20, fontWeight:500, color:accent||'rgba(255,255,255,0.9)', letterSpacing:'-0.03em', lineHeight:1 }}>{val}</div>
+                <div className="font-display" style={{ fontSize:hero?34:22, color:accent||'rgba(255,255,255,0.9)', lineHeight:1 }}>{val}</div>
             }
             {sub && <div style={{ fontSize:10, color:'rgba(255,255,255,0.28)', marginTop:8, fontFamily:'Barlow,sans-serif', fontWeight:300 }}>{sub}</div>}
         </div>
@@ -679,7 +680,7 @@ function App() {
                                 const n=parse$(c.col_9), isP=pos(n);
                                 return (
                                     <tr key={i} className="tr">
-                                        <td style={{ padding:'11px 18px', fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'DM Mono,monospace' }}>{c["OPERACIONES CERRADAS"]}</td>
+                                        <td style={{ padding:'11px 18px', fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{c["OPERACIONES CERRADAS"]}</td>
                                         <td style={{ padding:'11px 18px' }}>
                                             <span style={{ fontWeight:500, color:'rgba(255,255,255,0.88)', fontSize:13, fontFamily:'Barlow,sans-serif' }}>{c.col_2}</span>
                                             <span style={{ marginLeft:6, fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{c.col_3}</span>
@@ -699,7 +700,7 @@ function App() {
                                 const isC = op.col_4?.toLowerCase()==='compra';
                                 return (
                                     <tr key={i} className="tr">
-                                        <td style={{ padding:'11px 18px', fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'DM Mono,monospace' }}>{op["OPERACIONES"]}</td>
+                                        <td style={{ padding:'11px 18px', fontSize:11, color:'rgba(255,255,255,0.28)', fontFamily:'Barlow,sans-serif' }}>{op["OPERACIONES"]}</td>
                                         <td style={{ padding:'11px 18px' }}>
                                             <span style={{ fontSize:11, fontWeight:400, padding:'3px 10px', borderRadius:99, background:isC?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)', color:isC?'rgba(165,180,252,0.9)':'rgba(255,255,255,0.45)', fontFamily:'Barlow,sans-serif' }}>{op.col_4}</span>
                                         </td>
