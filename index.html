@@ -519,18 +519,31 @@ function App() {
         return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     }, []);
 
+    const effectiveMes = useMemo(() => {
+        if (mesF!=='current') return mesF;
+        // Si el mes actual tiene datos, usarlo; si no, usar el último mes disponible
+        const hasCurrent = gastos.some(g => {
+            if (!g.Fecha) return false;
+            const pts=g.Fecha.split('/');
+            if (pts.length<2) return false;
+            const m=parseInt(pts[1])||0, y=pts[2]||'';
+            return `${y}-${String(m).padStart(2,'0')}`===currentMonthOrd;
+        });
+        if (hasCurrent) return currentMonthOrd;
+        return monthList.length>0 ? monthList[monthList.length-1].ord : currentMonthOrd;
+    }, [mesF, gastos, currentMonthOrd, monthList]);
+
     const gastosMes = useMemo(() => {
-        if (mesF==='all') return gastos;
-        const target = mesF==='current' ? currentMonthOrd : mesF;
+        if (effectiveMes==='all') return gastos;
         return gastos.filter(g => {
             if (!g.Fecha) return false;
             const pts=g.Fecha.split('/');
             if (pts.length<2) return false;
             const m=parseInt(pts[1])||0, y=pts[2]||'';
             const ord=`${y}-${String(m).padStart(2,'0')}`;
-            return ord===target;
+            return ord===effectiveMes;
         });
-    }, [gastos, mesF, currentMonthOrd]);
+    }, [gastos, effectiveMes]);
 
     // ── Gastos derived (from month-filtered) ────────────────────────
     const chartData = useMemo(() => {
@@ -565,11 +578,10 @@ function App() {
     }, [gastosMes, catF]);
 
     const activeMesLabel = useMemo(() => {
-        if (mesF==='all') return 'Todo';
-        const target = mesF==='current' ? currentMonthOrd : mesF;
-        const found = monthList.find(m=>m.ord===target);
+        if (effectiveMes==='all') return 'Todo';
+        const found = monthList.find(m=>m.ord===effectiveMes);
         return found ? found.label : 'Este mes';
-    }, [mesF, currentMonthOrd, monthList]);
+    }, [effectiveMes, monthList]);
 
     const pos = v => v >= 0;
 
@@ -752,7 +764,7 @@ function App() {
                             {byMonth.length >= 2 && (
                                 <div className="liquid-glass" style={{ borderRadius:16, padding:'22px 24px' }}>
                                     <MonthBars data={byMonth}
-                                        activeOrd={mesF==='current'?currentMonthOrd:mesF}
+                                        activeOrd={effectiveMes}
                                         onSelect={(ord)=>{setMesF(ord===currentMonthOrd?'current':ord);setCatF('all');}}/>
                                 </div>
                             )}
