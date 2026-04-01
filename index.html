@@ -221,7 +221,11 @@ const parse$ = v => {
     if (!v) return 0;
     return parseFloat(v.toString().replace(/\./g,'').replace(/,/g,'.')) || 0;
 };
-const fmt$ = v => new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0).replace('US$','$');
+const fmt$ = v => {
+    const n = Math.round(v||0);
+    const abs = Math.abs(n).toLocaleString('de-DE');
+    return (n<0?'-':'') + '$' + abs;
+};
 const fmtPct = v => {
     try {
         if (v===undefined||v===null||v==='') return '';
@@ -519,19 +523,7 @@ function App() {
         return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     }, []);
 
-    const effectiveMes = useMemo(() => {
-        if (mesF!=='current') return mesF;
-        // Si el mes actual tiene datos, usarlo; si no, usar el último mes disponible
-        const hasCurrent = gastos.some(g => {
-            if (!g.Fecha) return false;
-            const pts=g.Fecha.split('/');
-            if (pts.length<2) return false;
-            const m=parseInt(pts[1])||0, y=pts[2]||'';
-            return `${y}-${String(m).padStart(2,'0')}`===currentMonthOrd;
-        });
-        if (hasCurrent) return currentMonthOrd;
-        return monthList.length>0 ? monthList[monthList.length-1].ord : currentMonthOrd;
-    }, [mesF, gastos, currentMonthOrd, monthList]);
+    const effectiveMes = mesF==='current' ? currentMonthOrd : mesF;
 
     const gastosMes = useMemo(() => {
         if (effectiveMes==='all') return gastos;
@@ -582,6 +574,21 @@ function App() {
         const found = monthList.find(m=>m.ord===effectiveMes);
         return found ? found.label : 'Este mes';
     }, [effectiveMes, monthList]);
+
+    // ── Tenis breakdown ─────────────────────────────────────────────
+    const tenisData = useMemo(() => {
+        const tenis = gastosMes.filter(g=>(g.CategoriaGasto||'').toLowerCase()==='tenis');
+        const map={};
+        tenis.forEach(g => {
+            const sub = g.Subcategoria || 'General';
+            map[sub] = (map[sub]||0) + parse$(g.Gasto);
+        });
+        const items = Object.entries(map).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+        const total = items.reduce((s,d)=>s+d.value,0);
+        return { items, total };
+    }, [gastosMes]);
+
+    const TENIS_COLS = ['#06d6a0','#4cc9f0','#f72585','#fb8500','#7209b7','#3a86ff','#f4a261','#ef233c'];
 
     const pos = v => v >= 0;
 
@@ -834,6 +841,51 @@ function App() {
                                 </table>
                             </div>
                         </div>
+
+                        {/* ── Tenis breakdown ──────────────────────── */}
+                        {tenisData.items.length > 0 && (
+                            <div className="liquid-glass" style={{ borderRadius:16, overflow:'hidden' }}>
+                                <div style={{ padding:'18px 22px', borderBottom:'1px solid rgba(255,255,255,0.04)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                                        <span style={{ fontSize:18 }}>🎾</span>
+                                        <h2 className="font-heading" style={{ fontSize:17, color:'rgba(255,255,255,0.9)' }}>Tenis</h2>
+                                    </div>
+                                    <span className="font-mono" style={{ fontSize:14, fontWeight:500, color:'#06d6a0' }}>{fmt$(tenisData.total)}</span>
+                                </div>
+                                <div style={{ padding:'20px 22px' }}>
+                                    {/* Bar chart horizontal */}
+                                    <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                                        {tenisData.items.map((d,i) => {
+                                            const pct = tenisData.total>0 ? (d.value/tenisData.total)*100 : 0;
+                                            const col = TENIS_COLS[i%TENIS_COLS.length];
+                                            return (
+                                                <div key={d.name} className="fade-up" style={{ animationDelay:`${i*0.06}s` }}>
+                                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                                                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                                            <div style={{ width:6, height:6, borderRadius:'50%', background:col, boxShadow:`0 0 6px ${col}88` }}/>
+                                                            <span style={{ fontSize:13, fontWeight:400, color:'rgba(255,255,255,0.7)', fontFamily:'Barlow,sans-serif' }}>{d.name}</span>
+                                                        </div>
+                                                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                                                            <span className="font-mono" style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>{pct.toFixed(0)}%</span>
+                                                            <span className="font-mono" style={{ fontSize:13, fontWeight:500, color:'rgba(255,255,255,0.88)', minWidth:60, textAlign:'right' }}>{fmt$(d.value)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ height:6, background:'rgba(255,255,255,0.04)', borderRadius:99, overflow:'hidden' }}>
+                                                        <div style={{
+                                                            height:'100%', width:`${pct}%`,
+                                                            background:`linear-gradient(90deg, ${col}66, ${col})`,
+                                                            borderRadius:99,
+                                                            transition:'width 0.8s cubic-bezier(.4,0,.2,1)',
+                                                            boxShadow:`0 0 8px ${col}44`,
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
