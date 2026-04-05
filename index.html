@@ -460,6 +460,7 @@ function App() {
     const [tab,     setTab]     = useState('expenses');
     const [catF,    setCatF]    = useState('all');
     const [mesF,    setMesF]    = useState('current');
+    const [pagoF,   setPagoF]   = useState('');
     const [spinning,setSpin]    = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -486,7 +487,12 @@ function App() {
     const rawCerradas  = data?.filter(d=>d.Categoria==='Cerradas')           || [];
     const rawOps       = data?.filter(d=>d.Categoria==='Operaciones')        || [];
 
-    const gastos    = rawGastos.filter(d=>d.Gasto!==""&&d.Descripción!=="Descripción"&&d.Gasto!=="Gasto");
+    const gastosAll = rawGastos.filter(d=>d.Gasto!==""&&d.Descripción!=="Descripción"&&d.Gasto!=="Gasto");
+    const gastos = useMemo(() => {
+        if (pagoF==='all') return gastosAll;
+        if (pagoF==='Mio') return gastosAll.filter(g=>(g.Pago||'').toString().trim().toLowerCase()==='mio');
+        return gastosAll.filter(g=>!(g.Pago||'').toString().trim());
+    }, [gastosAll.length, pagoF]);
     const resumen   = rawResumen.filter(d=>d.col_2!=="Todo lo que gastaste comprando activos"&&typeof d.col_2==='number');
     const portafolio= rawPort.filter(d=>d["PORTFOLIO ABIERTO"]!=="Ticker"&&d.col_2!=="Tipo"&&d["PORTFOLIO ABIERTO"]);
     const cerradas  = rawCerradas.filter(d=>d["OPERACIONES CERRADAS"]!=="Fecha Venta"&&d.col_2!=="Ticker"&&d["OPERACIONES CERRADAS"]);
@@ -744,6 +750,25 @@ function App() {
                                 onClick={()=>{setMesF('all');setCatF('all');}}>
                                 Todo el año
                             </button>
+                        </div>
+
+                        {/* Pago filter */}
+                        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                            <span style={{ fontSize:10, color:'rgba(255,255,255,0.22)', fontFamily:'Barlow,sans-serif', fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em', marginRight:4 }}>Pagado por</span>
+                            {[
+                                { id:'',    lbl:'General',  col:'#f59e0b' },
+                                { id:'Mio', lbl:'Mío',     col:'#3a86ff' },
+                                { id:'all', lbl:'Todos',   col:'#06d6a0' },
+                            ].map(p => {
+                                const isOn = pagoF===p.id;
+                                return (
+                                    <button key={p.id} className={`pill ${isOn?'on':''}`}
+                                        style={isOn?{borderColor:`${p.col}66`,color:p.col,background:`${p.col}14`}:{}}
+                                        onClick={()=>{setPagoF(p.id);setCatF('all');}}>
+                                        {p.lbl}
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* KPI strip */}
